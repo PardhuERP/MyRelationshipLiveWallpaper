@@ -3,8 +3,17 @@ package com.myrelationship.livewallpaper
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
+import android.os.Handler
+import android.os.Looper
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.Period
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MyLiveWallpaperService : WallpaperService() {
 
@@ -15,9 +24,32 @@ class MyLiveWallpaperService : WallpaperService() {
     inner class WallpaperEngine : Engine() {
 
         private var running = false
-        private var thread: Thread? = null
 
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val handler = Handler(Looper.getMainLooper())
+
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = Paint.Align.CENTER
+        }
+
+        private val startDateTime =
+            LocalDateTime.of(2024, 1, 15, 0, 0, 0)
+
+        private val timeFormatter =
+            DateTimeFormatter.ofPattern(
+                "HH:mm:ss",
+                Locale.getDefault()
+            )
+
+        private val drawRunnable = object : Runnable {
+            override fun run() {
+
+                if (!running) return
+
+                drawWallpaper()
+
+                handler.postDelayed(this, 1000)
+            }
+        }
 
         override fun onVisibilityChanged(visible: Boolean) {
             super.onVisibilityChanged(visible)
@@ -27,6 +59,11 @@ class MyLiveWallpaperService : WallpaperService() {
             } else {
                 stopDrawing()
             }
+        }
+
+        override fun onSurfaceCreated(holder: SurfaceHolder) {
+            super.onSurfaceCreated(holder)
+            startDrawing()
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
@@ -40,35 +77,20 @@ class MyLiveWallpaperService : WallpaperService() {
 
             running = true
 
-            thread = Thread {
-
-                while (running) {
-
-                    drawWallpaper()
-
-                    try {
-                        Thread.sleep(1000)
-                    } catch (e: InterruptedException) {
-                        break
-                    }
-                }
-            }
-
-            thread?.start()
+            handler.removeCallbacks(drawRunnable)
+            handler.post(drawRunnable)
         }
 
         private fun stopDrawing() {
 
             running = false
 
-            thread?.interrupt()
-            thread = null
+            handler.removeCallbacks(drawRunnable)
         }
 
         private fun drawWallpaper() {
 
             val holder = surfaceHolder
-
             var canvas: Canvas? = null
 
             try {
@@ -77,97 +99,275 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 if (canvas == null) return
 
-                canvas.drawColor(Color.rgb(25, 30, 38))
+                val width = canvas.width.toFloat()
+                val height = canvas.height.toFloat()
 
-                paint.color = Color.WHITE
-                paint.textAlign = Paint.Align.CENTER
+                /*
+                 * Responsive scaling.
+                 *
+                 * Designed around a 1080px wide phone,
+                 * then automatically scales for other screens.
+                 */
+                val scale = width / 1080f
 
-                // Lock
-                paint.textSize = 42f
-                canvas.drawText(
-                    "🔒",
-                    canvas.width / 2f,
-                    100f,
-                    paint
-                )
-
-                // Unlock text
-                paint.textSize = 28f
-                canvas.drawText(
-                    "Look down to unlock",
-                    canvas.width / 2f,
-                    150f,
-                    paint
+                // Background
+                canvas.drawColor(
+                    Color.rgb(15, 18, 25)
                 )
 
                 // Current time
-                val time = java.text.SimpleDateFormat(
-                    "HH:mm:ss",
-                    java.util.Locale.getDefault()
-                ).format(java.util.Date())
+                val now = LocalDateTime.now()
 
-                paint.textSize = 80f
+                // Relationship period
+                val period = Period.between(
+                    startDateTime.toLocalDate(),
+                    now.toLocalDate()
+                )
+
+                // Total elapsed duration
+                val startInstant =
+                    startDateTime
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+
+                val nowInstant =
+                    now.atZone(ZoneId.systemDefault())
+                        .toInstant()
+
+                val duration =
+                    Duration.between(
+                        startInstant,
+                        nowInstant
+                    )
+
+                val totalSeconds =
+                    duration.seconds.coerceAtLeast(0)
+
+                val totalDays =
+                    totalSeconds / 86400
+
+                val hours =
+                    (totalSeconds % 86400) / 3600
+
+                val minutes =
+                    (totalSeconds % 3600) / 60
+
+                val seconds =
+                    totalSeconds % 60
+
+                // Vertical layout based on screen height
+                val top = height * 0.09f
+
+                // ------------------------------------------------
+                // LOCK
+                // ------------------------------------------------
+
+                paint.typeface = Typeface.DEFAULT
+                paint.color = Color.rgb(210, 214, 222)
+                paint.textSize = 30f * scale
 
                 canvas.drawText(
-                    time,
-                    canvas.width / 2f,
-                    270f,
+                    "🔒",
+                    width / 2f,
+                    top,
                     paint
                 )
 
-                // Relationship
-                paint.textSize = 28f
+                // ------------------------------------------------
+                // UNLOCK TEXT
+                // ------------------------------------------------
+
+                paint.color = Color.rgb(150, 155, 165)
+                paint.textSize = 17f * scale
 
                 canvas.drawText(
-                    "♥  together for  ♥",
-                    canvas.width / 2f,
-                    360f,
+                    "Look down to unlock",
+                    width / 2f,
+                    top + 42f * scale,
                     paint
                 )
 
-                paint.textSize = 48f
+                // ------------------------------------------------
+                // CURRENT TIME
+                // ------------------------------------------------
+
+                paint.typeface = Typeface.create(
+                    Typeface.DEFAULT,
+                    Typeface.NORMAL
+                )
+
+                paint.color = Color.WHITE
+                paint.textSize = 52f * scale
 
                 canvas.drawText(
-                    "0y, 0m, 0d",
-                    canvas.width / 2f,
-                    430f,
+                    now.format(timeFormatter),
+                    width / 2f,
+                    top + 115f * scale,
                     paint
                 )
 
-                paint.textSize = 24f
+                // ------------------------------------------------
+                // TOGETHER
+                // ------------------------------------------------
+
+                paint.color = Color.rgb(235, 90, 115)
+                paint.textSize = 17f * scale
+                paint.typeface = Typeface.DEFAULT_BOLD
 
                 canvas.drawText(
-                    "Since 15 Jan 2024",
-                    canvas.width / 2f,
-                    475f,
+                    "♥  TOGETHER FOR  ♥",
+                    width / 2f,
+                    top + 175f * scale,
                     paint
                 )
 
-                // Seconds counter
-                paint.textSize = 42f
+                // ------------------------------------------------
+                // YEARS / MONTHS / DAYS
+                // ------------------------------------------------
+
+                paint.color = Color.WHITE
+                paint.textSize = 38f * scale
+                paint.typeface = Typeface.DEFAULT_BOLD
+
+                val relationshipText =
+                    "${period.years} Years  •  " +
+                    "${period.months} Months  •  " +
+                    "${period.days} Days"
 
                 canvas.drawText(
-                    "987",
-                    canvas.width / 2f,
-                    570f,
+                    relationshipText,
+                    width / 2f,
+                    top + 225f * scale,
                     paint
                 )
 
-                paint.textSize = 20f
+                // ------------------------------------------------
+                // SINCE DATE
+                // ------------------------------------------------
+
+                paint.color = Color.rgb(145, 150, 160)
+                paint.textSize = 16f * scale
+                paint.typeface = Typeface.DEFAULT
 
                 canvas.drawText(
-                    "DAYS     HOURS     MIN",
-                    canvas.width / 2f,
-                    610f,
+                    "Since 15 January 2024",
+                    width / 2f,
+                    top + 262f * scale,
                     paint
                 )
 
-                paint.textSize = 20f
+                // ------------------------------------------------
+                // DIVIDER
+                // ------------------------------------------------
+
+                paint.color = Color.rgb(55, 60, 70)
+                paint.strokeWidth = 1f * scale
+
+                canvas.drawLine(
+                    width * 0.18f,
+                    top + 300f * scale,
+                    width * 0.82f,
+                    top + 300f * scale,
+                    paint
+                )
+
+                // ------------------------------------------------
+                // TOTAL DAYS
+                // ------------------------------------------------
+
+                paint.color = Color.WHITE
+                paint.textSize = 40f * scale
+                paint.typeface = Typeface.DEFAULT_BOLD
 
                 canvas.drawText(
-                    "♥ Same People Same Dreams ♥",
-                    canvas.width / 2f,
-                    700f,
+                    totalDays.toString(),
+                    width / 2f,
+                    top + 355f * scale,
+                    paint
+                )
+
+                paint.color = Color.rgb(145, 150, 160)
+                paint.textSize = 13f * scale
+
+                canvas.drawText(
+                    "TOTAL DAYS",
+                    width / 2f,
+                    top + 382f * scale,
+                    paint
+                )
+
+                // ------------------------------------------------
+                // HOURS / MINUTES / SECONDS
+                // ------------------------------------------------
+
+                val columnY = top + 445f * scale
+
+                val leftX = width * 0.28f
+                val centerX = width * 0.50f
+                val rightX = width * 0.72f
+
+                paint.color = Color.WHITE
+                paint.textSize = 27f * scale
+                paint.typeface = Typeface.DEFAULT_BOLD
+
+                canvas.drawText(
+                    String.format("%02d", hours),
+                    leftX,
+                    columnY,
+                    paint
+                )
+
+                canvas.drawText(
+                    String.format("%02d", minutes),
+                    centerX,
+                    columnY,
+                    paint
+                )
+
+                canvas.drawText(
+                    String.format("%02d", seconds),
+                    rightX,
+                    columnY,
+                    paint
+                )
+
+                paint.color = Color.rgb(130, 135, 145)
+                paint.textSize = 12f * scale
+                paint.typeface = Typeface.DEFAULT
+
+                canvas.drawText(
+                    "HOURS",
+                    leftX,
+                    columnY + 25f * scale,
+                    paint
+                )
+
+                canvas.drawText(
+                    "MINUTES",
+                    centerX,
+                    columnY + 25f * scale,
+                    paint
+                )
+
+                canvas.drawText(
+                    "SECONDS",
+                    rightX,
+                    columnY + 25f * scale,
+                    paint
+                )
+
+                // ------------------------------------------------
+                // MESSAGE
+                // ------------------------------------------------
+
+                paint.color = Color.rgb(235, 90, 115)
+                paint.textSize = 16f * scale
+                paint.typeface = Typeface.DEFAULT_BOLD
+
+                canvas.drawText(
+                    "♥  Same People • Same Dreams  ♥",
+                    width / 2f,
+                    top + 535f * scale,
                     paint
                 )
 
