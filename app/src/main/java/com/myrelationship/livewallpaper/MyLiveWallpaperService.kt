@@ -4,15 +4,11 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.os.Handler
-import android.os.Looper
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.Period
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class MyLiveWallpaperService : WallpaperService() {
@@ -24,31 +20,21 @@ class MyLiveWallpaperService : WallpaperService() {
     inner class WallpaperEngine : Engine() {
 
         private var running = false
-
-        private val handler = Handler(Looper.getMainLooper())
+        private var thread: Thread? = null
 
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textAlign = Paint.Align.CENTER
+            isSubpixelText = true
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
 
-        private val startDateTime =
-            LocalDateTime.of(2024, 1, 15, 0, 0, 0)
+        private val boldPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            isSubpixelText = true
+            typeface = Typeface.create("sans-serif", Typeface.BOLD)
+        }
 
-        private val timeFormatter =
-            DateTimeFormatter.ofPattern(
-                "HH:mm:ss",
-                Locale.getDefault()
-            )
-
-        private val drawRunnable = object : Runnable {
-            override fun run() {
-
-                if (!running) return
-
-                drawWallpaper()
-
-                handler.postDelayed(this, 1000)
-            }
+        private val startDate = Calendar.getInstance().apply {
+            set(2024, Calendar.JANUARY, 15, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
@@ -61,9 +47,17 @@ class MyLiveWallpaperService : WallpaperService() {
             }
         }
 
-        override fun onSurfaceCreated(holder: SurfaceHolder) {
-            super.onSurfaceCreated(holder)
-            startDrawing()
+        override fun onSurfaceChanged(
+            holder: SurfaceHolder,
+            format: Int,
+            width: Int,
+            height: Int
+        ) {
+            super.onSurfaceChanged(holder, format, width, height)
+
+            if (visible) {
+                startDrawing()
+            }
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
@@ -77,15 +71,29 @@ class MyLiveWallpaperService : WallpaperService() {
 
             running = true
 
-            handler.removeCallbacks(drawRunnable)
-            handler.post(drawRunnable)
+            thread = Thread {
+
+                while (running) {
+
+                    drawWallpaper()
+
+                    try {
+                        Thread.sleep(1000)
+                    } catch (e: InterruptedException) {
+                        break
+                    }
+                }
+            }
+
+            thread?.start()
         }
 
         private fun stopDrawing() {
 
             running = false
 
-            handler.removeCallbacks(drawRunnable)
+            thread?.interrupt()
+            thread = null
         }
 
         private fun drawWallpaper() {
@@ -101,273 +109,268 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 val width = canvas.width.toFloat()
                 val height = canvas.height.toFloat()
+                val centerX = width / 2f
 
-                /*
-                 * Responsive scaling.
-                 *
-                 * Designed around a 1080px wide phone,
-                 * then automatically scales for other screens.
-                 */
+                // ------------------------------------------------
+                // BACKGROUND
+                // ------------------------------------------------
+
+                canvas.drawColor(
+                    Color.rgb(15, 18, 24)
+                )
+
+                // ------------------------------------------------
+                // RESPONSIVE SCALE
+                // ------------------------------------------------
+
                 val scale = width / 1080f
 
-                // Background
-                canvas.drawColor(
-                    Color.rgb(15, 18, 25)
-                )
-
-                // Current time
-                val now = LocalDateTime.now()
-
-                // Relationship period
-                val period = Period.between(
-                    startDateTime.toLocalDate(),
-                    now.toLocalDate()
-                )
-
-                // Total elapsed duration
-                val startInstant =
-                    startDateTime
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()
-
-                val nowInstant =
-                    now.atZone(ZoneId.systemDefault())
-                        .toInstant()
-
-                val duration =
-                    Duration.between(
-                        startInstant,
-                        nowInstant
-                    )
-
-                val totalSeconds =
-                    duration.seconds.coerceAtLeast(0)
-
-                val totalDays =
-                    totalSeconds / 86400
-
-                val hours =
-                    (totalSeconds % 86400) / 3600
-
-                val minutes =
-                    (totalSeconds % 3600) / 60
-
-                val seconds =
-                    totalSeconds % 60
-
-                // Vertical layout based on screen height
-                val top = height * 0.09f
+                // Start lower to avoid Android wallpaper
+                // preview/header overlap.
+                var y = 190f * scale
 
                 // ------------------------------------------------
                 // LOCK
                 // ------------------------------------------------
 
-                paint.typeface = Typeface.DEFAULT
-                paint.color = Color.rgb(210, 214, 222)
-                paint.textSize = 30f * scale
+                boldPaint.color = Color.WHITE
+                boldPaint.textAlign = Paint.Align.CENTER
+                boldPaint.textSize = 26f * scale
 
                 canvas.drawText(
                     "🔒",
-                    width / 2f,
-                    top,
-                    paint
+                    centerX,
+                    y,
+                    boldPaint
                 )
+
+                y += 45f * scale
 
                 // ------------------------------------------------
                 // UNLOCK TEXT
                 // ------------------------------------------------
 
                 paint.color = Color.rgb(150, 155, 165)
+                paint.textAlign = Paint.Align.CENTER
                 paint.textSize = 17f * scale
 
                 canvas.drawText(
                     "Look down to unlock",
-                    width / 2f,
-                    top + 42f * scale,
+                    centerX,
+                    y,
                     paint
                 )
+
+                y += 75f * scale
 
                 // ------------------------------------------------
                 // CURRENT TIME
                 // ------------------------------------------------
 
-                paint.typeface = Typeface.create(
-                    Typeface.DEFAULT,
-                    Typeface.NORMAL
-                )
+                val time = SimpleDateFormat(
+                    "HH:mm:ss",
+                    Locale.getDefault()
+                ).format(Date())
 
-                paint.color = Color.WHITE
-                paint.textSize = 52f * scale
+                boldPaint.color = Color.WHITE
+                boldPaint.textSize = 48f * scale
 
                 canvas.drawText(
-                    now.format(timeFormatter),
-                    width / 2f,
-                    top + 115f * scale,
-                    paint
+                    time,
+                    centerX,
+                    y,
+                    boldPaint
                 )
 
+                y += 62f * scale
+
                 // ------------------------------------------------
-                // TOGETHER
+                // TOGETHER FOR
                 // ------------------------------------------------
 
-                paint.color = Color.rgb(235, 90, 115)
-                paint.textSize = 17f * scale
-                paint.typeface = Typeface.DEFAULT_BOLD
+                paint.color = Color.rgb(255, 55, 75)
+                paint.textSize = 16f * scale
 
                 canvas.drawText(
                     "♥  TOGETHER FOR  ♥",
-                    width / 2f,
-                    top + 175f * scale,
+                    centerX,
+                    y,
                     paint
                 )
 
+                y += 48f * scale
+
                 // ------------------------------------------------
-                // YEARS / MONTHS / DAYS
+                // RELATIONSHIP TIME
                 // ------------------------------------------------
 
-                paint.color = Color.WHITE
-                paint.textSize = 38f * scale
-                paint.typeface = Typeface.DEFAULT_BOLD
+                val relationship = calculateRelationship()
 
-                val relationshipText =
-                    "${period.years} Years  •  " +
-                    "${period.months} Months  •  " +
-                    "${period.days} Days"
+                boldPaint.color = Color.WHITE
+                boldPaint.textSize = 32f * scale
 
                 canvas.drawText(
-                    relationshipText,
-                    width / 2f,
-                    top + 225f * scale,
-                    paint
+                    "${relationship.years} Years  •  " +
+                            "${relationship.months} Months  •  " +
+                            "${relationship.days} Days",
+                    centerX,
+                    y,
+                    boldPaint
                 )
 
+                y += 38f * scale
+
                 // ------------------------------------------------
-                // SINCE DATE
+                // START DATE
                 // ------------------------------------------------
 
-                paint.color = Color.rgb(145, 150, 160)
-                paint.textSize = 16f * scale
-                paint.typeface = Typeface.DEFAULT
+                paint.color = Color.rgb(130, 135, 145)
+                paint.textSize = 15f * scale
 
                 canvas.drawText(
                     "Since 15 January 2024",
-                    width / 2f,
-                    top + 262f * scale,
+                    centerX,
+                    y,
                     paint
                 )
+
+                y += 35f * scale
 
                 // ------------------------------------------------
                 // DIVIDER
                 // ------------------------------------------------
 
-                paint.color = Color.rgb(55, 60, 70)
+                paint.color = Color.rgb(50, 54, 62)
                 paint.strokeWidth = 1f * scale
 
                 canvas.drawLine(
                     width * 0.18f,
-                    top + 300f * scale,
+                    y,
                     width * 0.82f,
-                    top + 300f * scale,
+                    y,
                     paint
                 )
+
+                y += 58f * scale
 
                 // ------------------------------------------------
                 // TOTAL DAYS
                 // ------------------------------------------------
 
-                paint.color = Color.WHITE
-                paint.textSize = 40f * scale
-                paint.typeface = Typeface.DEFAULT_BOLD
+                val elapsedMillis =
+                    System.currentTimeMillis() -
+                            startDate.timeInMillis
+
+                val totalSeconds =
+                    elapsedMillis / 1000
+
+                val totalDays =
+                    totalSeconds / 86400
+
+                boldPaint.color = Color.WHITE
+                boldPaint.textSize = 34f * scale
 
                 canvas.drawText(
                     totalDays.toString(),
-                    width / 2f,
-                    top + 355f * scale,
-                    paint
+                    centerX,
+                    y,
+                    boldPaint
                 )
 
-                paint.color = Color.rgb(145, 150, 160)
-                paint.textSize = 13f * scale
+                y += 28f * scale
+
+                paint.color = Color.rgb(125, 130, 140)
+                paint.textSize = 12f * scale
 
                 canvas.drawText(
                     "TOTAL DAYS",
-                    width / 2f,
-                    top + 382f * scale,
+                    centerX,
+                    y,
                     paint
                 )
+
+                y += 65f * scale
 
                 // ------------------------------------------------
                 // HOURS / MINUTES / SECONDS
                 // ------------------------------------------------
 
-                val columnY = top + 445f * scale
+                val hours =
+                    (totalSeconds / 3600) % 24
 
-                val leftX = width * 0.28f
-                val centerX = width * 0.50f
-                val rightX = width * 0.72f
+                val minutes =
+                    (totalSeconds / 60) % 60
 
-                paint.color = Color.WHITE
-                paint.textSize = 27f * scale
-                paint.typeface = Typeface.DEFAULT_BOLD
+                val seconds =
+                    totalSeconds % 60
+
+                val column1 = width * 0.27f
+                val column2 = width * 0.50f
+                val column3 = width * 0.73f
+
+                boldPaint.color = Color.WHITE
+                boldPaint.textSize = 25f * scale
 
                 canvas.drawText(
-                    String.format("%02d", hours),
-                    leftX,
-                    columnY,
-                    paint
+                    hours.toString(),
+                    column1,
+                    y,
+                    boldPaint
                 )
 
                 canvas.drawText(
-                    String.format("%02d", minutes),
-                    centerX,
-                    columnY,
-                    paint
+                    minutes.toString(),
+                    column2,
+                    y,
+                    boldPaint
                 )
 
                 canvas.drawText(
-                    String.format("%02d", seconds),
-                    rightX,
-                    columnY,
-                    paint
+                    seconds.toString(),
+                    column3,
+                    y,
+                    boldPaint
                 )
 
-                paint.color = Color.rgb(130, 135, 145)
-                paint.textSize = 12f * scale
-                paint.typeface = Typeface.DEFAULT
+                y += 25f * scale
+
+                paint.color = Color.rgb(120, 125, 135)
+                paint.textSize = 11f * scale
 
                 canvas.drawText(
                     "HOURS",
-                    leftX,
-                    columnY + 25f * scale,
+                    column1,
+                    y,
                     paint
                 )
 
                 canvas.drawText(
                     "MINUTES",
-                    centerX,
-                    columnY + 25f * scale,
+                    column2,
+                    y,
                     paint
                 )
 
                 canvas.drawText(
                     "SECONDS",
-                    rightX,
-                    columnY + 25f * scale,
+                    column3,
+                    y,
                     paint
                 )
+
+                y += 65f * scale
 
                 // ------------------------------------------------
                 // MESSAGE
                 // ------------------------------------------------
 
-                paint.color = Color.rgb(235, 90, 115)
+                paint.color = Color.rgb(255, 55, 75)
                 paint.textSize = 16f * scale
-                paint.typeface = Typeface.DEFAULT_BOLD
 
                 canvas.drawText(
-                    "♥  Same People • Same Dreams  ♥",
-                    width / 2f,
-                    top + 535f * scale,
+                    "♥ Same People • Same Dreams ♥",
+                    centerX,
+                    y,
                     paint
                 )
 
@@ -378,5 +381,61 @@ class MyLiveWallpaperService : WallpaperService() {
                 }
             }
         }
+
+        // --------------------------------------------------------
+        // RELATIONSHIP CALCULATION
+        // --------------------------------------------------------
+
+        private fun calculateRelationship(): Relationship {
+
+            val start = startDate.clone() as Calendar
+            val now = Calendar.getInstance()
+
+            var years =
+                now.get(Calendar.YEAR) -
+                        start.get(Calendar.YEAR)
+
+            var months =
+                now.get(Calendar.MONTH) -
+                        start.get(Calendar.MONTH)
+
+            var days =
+                now.get(Calendar.DAY_OF_MONTH) -
+                        start.get(Calendar.DAY_OF_MONTH)
+
+            if (days < 0) {
+
+                months--
+
+                val previousMonth =
+                    now.clone() as Calendar
+
+                previousMonth.add(
+                    Calendar.MONTH,
+                    -1
+                )
+
+                days += previousMonth.getActualMaximum(
+                    Calendar.DAY_OF_MONTH
+                )
+            }
+
+            if (months < 0) {
+                years--
+                months += 12
+            }
+
+            return Relationship(
+                years,
+                months,
+                days
+            )
+        }
     }
+
+    data class Relationship(
+        val years: Int,
+        val months: Int,
+        val days: Int
+    )
 }
