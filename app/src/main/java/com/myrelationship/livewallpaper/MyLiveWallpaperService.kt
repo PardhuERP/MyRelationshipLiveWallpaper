@@ -1260,7 +1260,7 @@ if (isAnniversaryToday(anniversary)) {
 
             drawText(
                 canvas,
-                "Hear beat...",
+                "Heart beat...",
                 centerX,
                 170f,
                 18f,
@@ -1278,7 +1278,7 @@ if (isAnniversaryToday(anniversary)) {
 
             val time =
                 SimpleDateFormat(
-                    "HH:mm:ss",
+                    "HH:mm",
                     Locale.getDefault()
                 ).format(Date())
 
