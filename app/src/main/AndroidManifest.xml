@@ -33,6 +33,22 @@
 
         </service>
 
+        <service
+    android:name=".MyLiveWallpaperService"
+    android:permission="android.permission.BIND_WALLPAPER"
+    android:exported="true"
+    android:label="Relationship Wallpaper">
+
+    <intent-filter>
+        <action android:name="android.service.wallpaper.WallpaperService" />
+    </intent-filter>
+
+    <meta-data
+        android:name="android.service.wallpaper"
+        android:resource="@xml/wallpaper" />
+
+</service>
+
     </application>
 
 </manifest>
