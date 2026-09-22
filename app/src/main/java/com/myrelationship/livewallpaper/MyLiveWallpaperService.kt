@@ -1562,61 +1562,104 @@ class MyLiveWallpaperService : WallpaperService() {
         // HEART
         // ============================================================
 
-        private fun drawHeartShape(
-            canvas: Canvas,
-            cx: Float,
-            cy: Float,
-            size: Float,
-            color: Int
-        ) {
+        // ============================================================
+// HEART
+// ============================================================
 
-            path.reset()
+private fun drawHeartShape(
+    canvas: Canvas,
+    cx: Float,
+    cy: Float,
+    size: Float,
+    color: Int
+) {
 
-            path.moveTo(
-                cx,
-                cy + size
-            )
+    path.reset()
 
-            path.cubicTo(
-                cx - size * 1.7f,
-                cy - size * 0.1f,
-                cx - size * 1.2f,
-                cy - size * 1.4f,
-                cx - size * 0.45f,
-                cy - size * 0.95f
-            )
+    // --------------------------------------------------------
+    // Start at bottom point
+    // --------------------------------------------------------
 
-            path.cubicTo(
-                cx,
-                cy - size * 1.55f,
-                cx + size * 0.45f,
-                cy - size * 1.55f,
-                cx + size * 0.45f,
-                cy - size * 0.95f
-            )
+    path.moveTo(
+        cx,
+        cy + size * 1.15f
+    )
 
-            path.cubicTo(
-                cx + size * 1.2f,
-                cy - size * 1.4f,
-                cx + size * 1.7f,
-                cy - size * 0.1f,
-                cx,
-                cy + size
-            )
+    // --------------------------------------------------------
+    // LEFT SIDE + LEFT LOBE
+    // --------------------------------------------------------
 
-            paint.style =
-                Paint.Style.FILL
+    path.cubicTo(
+        cx - size * 1.55f,
+        cy + size * 0.15f,
 
-            paint.color =
-                color
+        cx - size * 1.55f,
+        cy - size * 0.85f,
 
-            paint.alpha = 255
+        cx - size * 0.75f,
+        cy - size * 0.85f
+    )
 
-            canvas.drawPath(
-                path,
-                paint
-            )
-        }
+    // --------------------------------------------------------
+    // LEFT LOBE TO CENTER NOTCH
+    // --------------------------------------------------------
+
+    path.cubicTo(
+        cx - size * 0.30f,
+        cy - size * 0.85f,
+
+        cx - size * 0.12f,
+        cy - size * 0.42f,
+
+        cx,
+        cy - size * 0.25f
+    )
+
+    // --------------------------------------------------------
+    // CENTER NOTCH TO RIGHT LOBE
+    // --------------------------------------------------------
+
+    path.cubicTo(
+        cx + size * 0.12f,
+        cy - size * 0.42f,
+
+        cx + size * 0.30f,
+        cy - size * 0.85f,
+
+        cx + size * 0.75f,
+        cy - size * 0.85f
+    )
+
+    // --------------------------------------------------------
+    // RIGHT LOBE + RIGHT SIDE TO BOTTOM
+    // --------------------------------------------------------
+
+    path.cubicTo(
+        cx + size * 1.55f,
+        cy - size * 0.85f,
+
+        cx + size * 1.55f,
+        cy + size * 0.15f,
+
+        cx,
+        cy + size * 1.15f
+    )
+
+    // --------------------------------------------------------
+    // DRAW
+    // --------------------------------------------------------
+
+    paint.style = Paint.Style.FILL
+
+    paint.color = color
+
+    paint.alpha = 255
+
+    canvas.drawPath(
+        path,
+        paint
+    )
+}
 
         // ============================================================
         // LARGE HEART
