@@ -177,7 +177,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 val x = -40f + i * 7f
 
                 val wave =
-                    sin(i * 0.045 + t * 0.45) * 70f
+    (sin(i * 0.045 + t * 0.45) * 70.0).toFloat()
 
                 val y =
                     startY +
@@ -205,7 +205,7 @@ class MyLiveWallpaperService : WallpaperService() {
                     width + 40f - i * 7f
 
                 val wave =
-                    cos(i * 0.05 + t * 0.4) * 60f
+    (cos(i * 0.05 + t * 0.4) * 60.0).toFloat()
 
                 val y =
                     height * 0.55f +
