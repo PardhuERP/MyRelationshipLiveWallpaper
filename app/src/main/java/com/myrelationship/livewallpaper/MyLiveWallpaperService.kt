@@ -1445,6 +1445,20 @@ val daysUntilAnniversary =
         now
     )
 
+   // ========================================================
+// NEXT ANNIVERSARY COUPLE LOGO
+// ========================================================
+
+drawText(
+    canvas,
+    "👩‍❤️‍👨",
+    centerX,
+    1335f,
+    32f,
+    Color.WHITE,
+    false
+) 
+
 drawText(
     canvas,
     "♥  NEXT ANNIVERSARY  ♥",
