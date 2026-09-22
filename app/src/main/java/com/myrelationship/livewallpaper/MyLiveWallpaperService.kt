@@ -1453,7 +1453,7 @@ drawText(
     canvas,
     "👩‍❤️‍👨",
     centerX,
-    1335f,
+    1315f,
     32f,
     Color.WHITE,
     false
@@ -1463,7 +1463,7 @@ drawText(
     canvas,
     "♥  NEXT ANNIVERSARY  ♥",
     centerX,
-    1340f,
+    1360f,
     23f,
     Color.rgb(
         255,
@@ -1479,7 +1479,7 @@ drawText(
         nextAnniversary
     ),
     centerX,
-    1380f,
+    1400f,
     24f,
     Color.WHITE,
     true
