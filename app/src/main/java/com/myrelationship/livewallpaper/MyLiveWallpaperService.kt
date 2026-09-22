@@ -6,6 +6,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
@@ -14,6 +16,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.sin
 
 class MyLiveWallpaperService : WallpaperService() {
@@ -27,7 +30,10 @@ class MyLiveWallpaperService : WallpaperService() {
         private var running = false
         private var drawingThread: Thread? = null
 
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val paint = Paint(
+            Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG
+        )
+
         private val path = Path()
 
         private var animationTime = 0L
@@ -52,7 +58,33 @@ class MyLiveWallpaperService : WallpaperService() {
         // WALLPAPER LIFECYCLE
         // ============================================================
 
-        override fun onVisibilityChanged(isVisible: Boolean) {
+        override fun onSurfaceCreated(holder: SurfaceHolder) {
+            super.onSurfaceCreated(holder)
+
+            startAnimation()
+        }
+
+        override fun onSurfaceChanged(
+            holder: SurfaceHolder,
+            format: Int,
+            width: Int,
+            height: Int
+        ) {
+            super.onSurfaceChanged(
+                holder,
+                format,
+                width,
+                height
+            )
+
+            if (!running) {
+                startAnimation()
+            }
+        }
+
+        override fun onVisibilityChanged(
+            isVisible: Boolean
+        ) {
             super.onVisibilityChanged(isVisible)
 
             if (isVisible) {
@@ -62,37 +94,36 @@ class MyLiveWallpaperService : WallpaperService() {
             }
         }
 
-        override fun onSurfaceChanged(
-            holder: SurfaceHolder,
-            format: Int,
-            width: Int,
-            height: Int
+        override fun onSurfaceDestroyed(
+            holder: SurfaceHolder
         ) {
-            super.onSurfaceChanged(holder, format, width, height)
 
-            if (!running) {
-                startAnimation()
-            }
-        }
-
-        override fun onSurfaceDestroyed(holder: SurfaceHolder) {
             stopAnimation()
+
             super.onSurfaceDestroyed(holder)
         }
 
         override fun onDestroy() {
+
             stopAnimation()
 
-            backgroundBitmap?.recycle()
+            backgroundBitmap?.let {
+                if (!it.isRecycled) {
+                    it.recycle()
+                }
+            }
+
             backgroundBitmap = null
+            loadedBackgroundUri = null
 
             super.onDestroy()
         }
 
         // ============================================================
-        // START ANIMATION
+        // START
         // ============================================================
 
+        @Synchronized
         private fun startAnimation() {
 
             if (running) return
@@ -103,14 +134,29 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 while (running) {
 
-                    animationTime = System.currentTimeMillis()
-
-                    drawWallpaper()
-
                     try {
+
+                        animationTime =
+                            System.currentTimeMillis()
+
+                        drawWallpaper()
+
                         Thread.sleep(40)
+
                     } catch (_: InterruptedException) {
+
                         break
+
+                    } catch (_: Throwable) {
+
+                        // Prevent wallpaper service from
+                        // crashing because of a drawing error.
+
+                        try {
+                            Thread.sleep(200)
+                        } catch (_: Exception) {
+                            break
+                        }
                     }
                 }
             }
@@ -119,9 +165,10 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // ============================================================
-        // STOP ANIMATION
+        // STOP
         // ============================================================
 
+        @Synchronized
         private fun stopAnimation() {
 
             running = false
@@ -131,29 +178,50 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // ============================================================
-        // MAIN WALLPAPER DRAWING
+        // MAIN DRAWING
         // ============================================================
 
         private fun drawWallpaper() {
 
             val holder = surfaceHolder
+
+            if (!holder.surface.isValid) {
+                return
+            }
+
             var canvas: Canvas? = null
 
             try {
 
                 canvas = holder.lockCanvas()
 
-                if (canvas == null) return
+                if (canvas == null) {
+                    return
+                }
 
-                val screenWidth = canvas.width.toFloat()
-                val screenHeight = canvas.height.toFloat()
+                val screenWidth =
+                    canvas.width.toFloat()
+
+                val screenHeight =
+                    canvas.height.toFloat()
+
+                if (
+                    screenWidth <= 0f ||
+                    screenHeight <= 0f
+                ) {
+                    return
+                }
 
                 // ----------------------------------------------------
-                // BASE COLOR
+                // BASE
                 // ----------------------------------------------------
 
                 canvas.drawColor(
-                    Color.rgb(4, 7, 13)
+                    Color.rgb(
+                        4,
+                        7,
+                        13
+                    )
                 )
 
                 // ----------------------------------------------------
@@ -162,10 +230,6 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 val designWidth = 1080f
                 val designHeight = 2400f
-
-                // ----------------------------------------------------
-                // SCREEN SCALE
-                // ----------------------------------------------------
 
                 val scaleX =
                     screenWidth / designWidth
@@ -181,14 +245,10 @@ class MyLiveWallpaperService : WallpaperService() {
                 )
 
                 // ----------------------------------------------------
-                // LOAD IMAGE IF REQUIRED
+                // BACKGROUND IMAGE
                 // ----------------------------------------------------
 
                 loadBackgroundIfNeeded()
-
-                // ----------------------------------------------------
-                // BACKGROUND IMAGE
-                // ----------------------------------------------------
 
                 drawBackgroundImage(
                     canvas,
@@ -197,7 +257,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 )
 
                 // ----------------------------------------------------
-                // BACKGROUND EFFECTS
+                // EFFECTS
                 // ----------------------------------------------------
 
                 drawBackgroundEffects(
@@ -207,7 +267,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 )
 
                 // ----------------------------------------------------
-                // MAIN CONTENT
+                // CONTENT
                 // ----------------------------------------------------
 
                 drawMainContent(
@@ -218,65 +278,196 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 canvas.restore()
 
+            } catch (_: Throwable) {
+
+                // Never allow a drawing exception
+                // to kill the wallpaper service.
+
             } finally {
 
                 if (canvas != null) {
-                    holder.unlockCanvasAndPost(canvas)
+
+                    try {
+                        holder.unlockCanvasAndPost(canvas)
+                    } catch (_: Throwable) {
+                    }
                 }
             }
         }
 
         // ============================================================
-        // BACKGROUND IMAGE LOADER
+        // LOAD BACKGROUND IMAGE
+        // IMPORTANT:
+        // Image is downsampled to avoid OOM/service crash.
         // ============================================================
 
         private fun loadBackgroundIfNeeded() {
 
-            val uriString = prefs.getString(
-                "background_uri",
-                null
-            )
+            val uriString =
+                prefs.getString(
+                    "background_uri",
+                    null
+                )
 
-            // Nothing changed
             if (uriString == loadedBackgroundUri) {
                 return
             }
 
-            // Remove old bitmap
-            backgroundBitmap?.recycle()
-            backgroundBitmap = null
-
             loadedBackgroundUri = uriString
 
+            val oldBitmap =
+                backgroundBitmap
+
+            backgroundBitmap = null
+
+            // Do NOT recycle immediately.
+            // This avoids possible bitmap-use crashes.
+
             if (uriString.isNullOrEmpty()) {
+
+                if (
+                    oldBitmap != null &&
+                    !oldBitmap.isRecycled
+                ) {
+                    try {
+                        oldBitmap.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+
                 return
             }
 
             try {
 
-                val uri = Uri.parse(uriString)
+                val uri =
+                    Uri.parse(uriString)
+
+                // ----------------------------------------------------
+                // First pass - get image dimensions
+                // ----------------------------------------------------
+
+                val boundsStream =
+                    contentResolver.openInputStream(uri)
+
+                if (boundsStream == null) {
+                    return
+                }
+
+                val boundsOptions =
+                    BitmapFactory.Options()
+
+                boundsOptions.inJustDecodeBounds = true
+
+                BitmapFactory.decodeStream(
+                    boundsStream,
+                    null,
+                    boundsOptions
+                )
+
+                boundsStream.close()
+
+                val imageWidth =
+                    boundsOptions.outWidth
+
+                val imageHeight =
+                    boundsOptions.outHeight
+
+                if (
+                    imageWidth <= 0 ||
+                    imageHeight <= 0
+                ) {
+                    return
+                }
+
+                // ----------------------------------------------------
+                // Calculate safe sample size
+                // ----------------------------------------------------
+
+                val maxWidth = 1080
+                val maxHeight = 2400
+
+                var sampleSize = 1
+
+                while (
+                    imageWidth / sampleSize > maxWidth * 2 ||
+                    imageHeight / sampleSize > maxHeight * 2
+                ) {
+
+                    sampleSize *= 2
+                }
+
+                // ----------------------------------------------------
+                // Second pass - actual bitmap
+                // ----------------------------------------------------
 
                 val inputStream =
                     contentResolver.openInputStream(uri)
 
-                if (inputStream != null) {
-
-                    backgroundBitmap =
-                        BitmapFactory.decodeStream(
-                            inputStream
-                        )
-
-                    inputStream.close()
+                if (inputStream == null) {
+                    return
                 }
 
-            } catch (_: Exception) {
+                val options =
+                    BitmapFactory.Options()
+
+                options.inSampleSize =
+                    max(
+                        1,
+                        sampleSize
+                    )
+
+                options.inPreferredConfig =
+                    Bitmap.Config.RGB_565
+
+                val bitmap =
+                    BitmapFactory.decodeStream(
+                        inputStream,
+                        null,
+                        options
+                    )
+
+                inputStream.close()
+
+                backgroundBitmap =
+                    bitmap
+
+                // ----------------------------------------------------
+                // Recycle old bitmap AFTER new bitmap loaded
+                // ----------------------------------------------------
+
+                if (
+                    oldBitmap != null &&
+                    oldBitmap != bitmap &&
+                    !oldBitmap.isRecycled
+                ) {
+
+                    try {
+                        oldBitmap.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
+
+            } catch (_: Throwable) {
 
                 backgroundBitmap = null
+
+                if (
+                    oldBitmap != null &&
+                    !oldBitmap.isRecycled
+                ) {
+
+                    try {
+                        oldBitmap.recycle()
+                    } catch (_: Exception) {
+                    }
+                }
             }
         }
 
         // ============================================================
         // DRAW BACKGROUND IMAGE
+        // CENTER CROP
         // ============================================================
 
         private fun drawBackgroundImage(
@@ -292,66 +483,73 @@ class MyLiveWallpaperService : WallpaperService() {
                 return
             }
 
-            val srcWidth =
-                bitmap.width.toFloat()
+            val bitmapWidth =
+                bitmap.width
 
-            val srcHeight =
-                bitmap.height.toFloat()
+            val bitmapHeight =
+                bitmap.height
 
-            if (srcWidth <= 0f || srcHeight <= 0f) {
+            if (
+                bitmapWidth <= 0 ||
+                bitmapHeight <= 0
+            ) {
                 return
             }
 
-            // --------------------------------------------------------
-            // CENTER-CROP
-            // --------------------------------------------------------
-
             val sourceRatio =
-                srcWidth / srcHeight
+                bitmapWidth.toFloat() /
+                        bitmapHeight.toFloat()
 
             val targetRatio =
                 width / height
 
-            var srcLeft = 0f
-            var srcTop = 0f
-            var srcRight = srcWidth
-            var srcBottom = srcHeight
+            val srcRect: Rect
 
             if (sourceRatio > targetRatio) {
 
-                // Image is wider
-                val newWidth =
-                    srcHeight * targetRatio
+                // Image wider than screen
 
-                srcLeft =
-                    (srcWidth - newWidth) / 2f
+                val cropWidth =
+                    (
+                        bitmapHeight *
+                                targetRatio
+                        ).toInt()
 
-                srcRight =
-                    srcLeft + newWidth
+                val left =
+                    (bitmapWidth - cropWidth) / 2
+
+                srcRect =
+                    Rect(
+                        left,
+                        0,
+                        left + cropWidth,
+                        bitmapHeight
+                    )
 
             } else {
 
-                // Image is taller
-                val newHeight =
-                    srcWidth / targetRatio
+                // Image taller than screen
 
-                srcTop =
-                    (srcHeight - newHeight) / 2f
+                val cropHeight =
+                    (
+                        bitmapWidth /
+                                targetRatio
+                        ).toInt()
 
-                srcBottom =
-                    srcTop + newHeight
+                val top =
+                    (bitmapHeight - cropHeight) / 2
+
+                srcRect =
+                    Rect(
+                        0,
+                        top,
+                        bitmapWidth,
+                        top + cropHeight
+                    )
             }
 
-            val srcRect =
-                android.graphics.RectF(
-                    srcLeft,
-                    srcTop,
-                    srcRight,
-                    srcBottom
-                )
-
             val dstRect =
-                android.graphics.RectF(
+                RectF(
                     0f,
                     0f,
                     width,
@@ -365,7 +563,7 @@ class MyLiveWallpaperService : WallpaperService() {
 
             canvas.drawBitmap(
                 bitmap,
-                null,
+                srcRect,
                 dstRect,
                 paint
             )
@@ -596,7 +794,7 @@ class MyLiveWallpaperService : WallpaperService() {
             )
 
             // --------------------------------------------------------
-            // FLOATING PARTICLES
+            // PARTICLES
             // --------------------------------------------------------
 
             paint.style =
@@ -605,8 +803,10 @@ class MyLiveWallpaperService : WallpaperService() {
             for (i in 0 until 45) {
 
                 val x =
-                    ((i * 173) %
-                            width.toInt()).toFloat()
+                    (
+                        (i * 173) %
+                                width.toInt()
+                        ).toFloat()
 
                 val movement =
                     (
@@ -637,7 +837,13 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas.drawCircle(
                     x,
                     y,
-                    if (i % 4 == 0) 3f else 1.5f,
+                    if (
+                        i % 4 == 0
+                    ) {
+                        3f
+                    } else {
+                        1.5f
+                    },
                     paint
                 )
             }
@@ -649,12 +855,16 @@ class MyLiveWallpaperService : WallpaperService() {
             for (i in 0 until 15) {
 
                 val x =
-                    ((i * 271) %
-                            width.toInt()).toFloat()
+                    (
+                        (i * 271) %
+                                width.toInt()
+                        ).toFloat()
 
                 val y =
-                    ((i * 191) %
-                            height.toInt()).toFloat()
+                    (
+                        (i * 191) %
+                                height.toInt()
+                        ).toFloat()
 
                 drawGlowDot(
                     canvas,
@@ -677,9 +887,9 @@ class MyLiveWallpaperService : WallpaperService() {
             val centerX =
                 width / 2f
 
-            // ========================================================
+            // --------------------------------------------------------
             // TOP HEART
-            // ========================================================
+            // --------------------------------------------------------
 
             drawGlowingHeart(
                 canvas,
@@ -701,9 +911,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 false
             )
 
-            // ========================================================
+            // --------------------------------------------------------
             // CLOCK
-            // ========================================================
+            // --------------------------------------------------------
 
             val time =
                 SimpleDateFormat(
@@ -721,9 +931,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 true
             )
 
-            // ========================================================
-            // CURRENT DATE
-            // ========================================================
+            // --------------------------------------------------------
+            // DATE
+            // --------------------------------------------------------
 
             val currentDate =
                 SimpleDateFormat(
@@ -745,9 +955,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 false
             )
 
-            // ========================================================
+            // --------------------------------------------------------
             // TOGETHER
-            // ========================================================
+            // --------------------------------------------------------
 
             drawText(
                 canvas,
@@ -815,9 +1025,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 490f
             )
 
-            // ========================================================
-            // TOGETHER TOTAL DAYS
-            // ========================================================
+            // --------------------------------------------------------
+            // TOGETHER TOTAL
+            // --------------------------------------------------------
 
             drawText(
                 canvas,
@@ -852,9 +1062,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 together.seconds
             )
 
-            // ========================================================
-            // WEDDING RINGS
-            // ========================================================
+            // --------------------------------------------------------
+            // RINGS
+            // --------------------------------------------------------
 
             drawWeddingRings(
                 canvas,
@@ -862,9 +1072,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 815f
             )
 
-            // ========================================================
+            // --------------------------------------------------------
             // MARRIED
-            // ========================================================
+            // --------------------------------------------------------
 
             drawText(
                 canvas,
@@ -929,9 +1139,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 1080f
             )
 
-            // ========================================================
-            // MARRIED TOTAL DAYS
-            // ========================================================
+            // --------------------------------------------------------
+            // MARRIED TOTAL
+            // --------------------------------------------------------
 
             drawText(
                 canvas,
@@ -966,9 +1176,9 @@ class MyLiveWallpaperService : WallpaperService() {
                 married.seconds
             )
 
-            // ========================================================
-            // BOTTOM MESSAGE
-            // ========================================================
+            // --------------------------------------------------------
+            // MESSAGE
+            // --------------------------------------------------------
 
             drawText(
                 canvas,
@@ -999,6 +1209,8 @@ class MyLiveWallpaperService : WallpaperService() {
 
         // ============================================================
         // DATE FROM SETTINGS
+        // Compatible with current MainActivity Long values
+        // Also supports old String values.
         // ============================================================
 
         private fun getDateFromSettings(
@@ -1007,12 +1219,6 @@ class MyLiveWallpaperService : WallpaperService() {
             defaultMonth: Int,
             defaultYear: Int
         ): Calendar {
-
-            val value =
-                prefs.getString(
-                    key,
-                    null
-                )
 
             val calendar =
                 Calendar.getInstance()
@@ -1031,31 +1237,61 @@ class MyLiveWallpaperService : WallpaperService() {
                 0
             )
 
-            if (value.isNullOrBlank()) {
+            // --------------------------------------------------------
+            // CURRENT MainActivity stores Long
+            // --------------------------------------------------------
+
+            val longValue =
+                prefs.getLong(
+                    key,
+                    Long.MIN_VALUE
+                )
+
+            if (
+                longValue !=
+                Long.MIN_VALUE &&
+                longValue > 0
+            ) {
+
+                calendar.timeInMillis =
+                    longValue
+
                 return calendar
             }
 
-            try {
+            // --------------------------------------------------------
+            // OLD VERSION stored String
+            // --------------------------------------------------------
 
-                val format =
-                    SimpleDateFormat(
-                        "dd-MM-yyyy",
-                        Locale.US
-                    )
+            val stringValue =
+                prefs.getString(
+                    key,
+                    null
+                )
 
-                format.isLenient = false
+            if (!stringValue.isNullOrBlank()) {
 
-                val date =
-                    format.parse(value)
+                try {
 
-                if (date != null) {
+                    val format =
+                        SimpleDateFormat(
+                            "dd-MM-yyyy",
+                            Locale.US
+                        )
 
-                    calendar.time =
-                        date
+                    format.isLenient = false
+
+                    val date =
+                        format.parse(
+                            stringValue
+                        )
+
+                    if (date != null) {
+                        calendar.time = date
+                    }
+
+                } catch (_: Exception) {
                 }
-
-            } catch (_: Exception) {
-                // Keep default date
             }
 
             return calendar
@@ -1096,6 +1332,8 @@ class MyLiveWallpaperService : WallpaperService() {
 
             paint.color =
                 color
+
+            paint.alpha = 255
 
             paint.textSize =
                 size
@@ -1291,12 +1529,9 @@ class MyLiveWallpaperService : WallpaperService() {
 
             for (i in 7 downTo 1) {
 
-                val alpha =
-                    12 * i
-
                 paint.color =
                     Color.argb(
-                        alpha,
+                        12 * i,
                         255,
                         20,
                         75
@@ -1324,7 +1559,7 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // ============================================================
-        // HEART SHAPE
+        // HEART
         // ============================================================
 
         private fun drawHeartShape(
@@ -1374,6 +1609,8 @@ class MyLiveWallpaperService : WallpaperService() {
 
             paint.color =
                 color
+
+            paint.alpha = 255
 
             canvas.drawPath(
                 path,
@@ -1698,8 +1935,9 @@ private fun calculateDuration(
         remaining / 1000L
 
     val hours =
-        (totalSeconds / 3600L)
-            .toInt()
+        (
+            totalSeconds / 3600L
+            ).toInt()
 
     val minutes =
         (
@@ -1708,8 +1946,9 @@ private fun calculateDuration(
             ).toInt()
 
     val seconds =
-        (totalSeconds % 60L)
-            .toInt()
+        (
+            totalSeconds % 60L
+            ).toInt()
 
     // ------------------------------------------------------------
     // TOTAL DAYS
