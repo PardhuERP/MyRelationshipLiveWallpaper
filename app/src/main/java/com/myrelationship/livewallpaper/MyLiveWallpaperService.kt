@@ -199,82 +199,43 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         private fun drawWallpaper() {
+    val holder = surfaceHolder
+    var canvas: Canvas? = null
 
-            val holder = surfaceHolder
+    try {
+        canvas = holder.lockCanvas()
+        if (canvas == null) return
 
-            var canvas: Canvas? = null
+        // Direct screen dimensions
+        val screenWidth = canvas.width.toFloat()
+        val screenHeight = canvas.height.toFloat()
 
-            try {
+        canvas.drawColor(Color.rgb(4, 7, 13))
 
-                canvas =
-                    holder.lockCanvas()
+        // Target Design Aspect Ratio
+        val targetWidth = 1080f
+        val targetHeight = 2400f
 
-                if (canvas == null) {
-                    return
-                }
+        // Calculate scaling factors for full screen coverage
+        val scaleX = screenWidth / targetWidth
+        val scaleY = screenHeight / targetHeight
 
-                val width =
-                    canvas.width.toFloat()
+        canvas.save()
+        // Uniform scaling target base content size
+        canvas.scale(scaleX, scaleY)
 
-                val height =
-                    canvas.height.toFloat()
+        drawBackgroundEffects(canvas, targetWidth, targetHeight)
+        drawMainContent(canvas, targetWidth, targetHeight)
 
-                canvas.drawColor(
-                    Color.rgb(4, 7, 13)
-                )
+        canvas.restore()
 
-                /*
-                 * DESIGN AREA
-                 *
-                 * 1080 x 2400
-                 *
-                 * This keeps the wallpaper
-                 * filling the complete screen.
-                 */
-
-                val scale =
-                    min(
-                        width / 1080f,
-                        height / 2400f
-                    )
-
-                canvas.save()
-
-                canvas.scale(
-                    scale,
-                    scale
-                )
-
-                val designWidth =
-                    width / scale
-
-                val designHeight =
-                    height / scale
-
-                drawBackgroundEffects(
-                    canvas,
-                    designWidth,
-                    designHeight
-                )
-
-                drawMainContent(
-                    canvas,
-                    designWidth,
-                    designHeight
-                )
-
-                canvas.restore()
-
-            } finally {
-
-                if (canvas != null) {
-
-                    holder.unlockCanvasAndPost(
-                        canvas
-                    )
-                }
-            }
+    } finally {
+        if (canvas != null) {
+            holder.unlockCanvasAndPost(canvas)
         }
+    }
+}
+
 
         // =========================================================
         // BACKGROUND
