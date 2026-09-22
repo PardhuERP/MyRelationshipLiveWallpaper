@@ -1426,14 +1426,6 @@ if (isAnniversaryToday(anniversary)) {
 // NEXT ANNIVERSARY
 // ========================================================
 
-val marriedStart =
-    getDateFromSettings(
-        "married_date",
-        9,
-        Calendar.APRIL,
-        2025
-    )
-
 val nextAnniversary =
     getNextAnniversary(
         marriedStart
@@ -1451,7 +1443,11 @@ drawText(
     centerX,
     1350f,
     23f,
-    Color.rgb(255, 55, 90),
+    Color.rgb(
+        255,
+        55,
+        90
+    ),
     true
 )
 
@@ -1475,7 +1471,11 @@ if (!isAnniversaryToday(nextAnniversary)) {
         centerX,
         1435f,
         14f,
-        Color.rgb(155, 158, 168),
+        Color.rgb(
+            155,
+            158,
+            168
+        ),
         false
     )
 }
