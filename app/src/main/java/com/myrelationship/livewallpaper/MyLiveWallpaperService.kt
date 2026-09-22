@@ -226,7 +226,7 @@ class MyLiveWallpaperService : WallpaperService() {
                     ((i * 173) % width.toInt()).toFloat()
 
                 val movement =
-                    ((t * (8 + i % 5)) % height)
+    ((t * (8 + i % 5)) % height.toDouble()).toFloat()
 
                 val y =
                     (height - movement + i * 130) % height
@@ -876,135 +876,113 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
-        private data class DurationResult(
-            val years: Int,
-            val months: Int,
-            val days: Int,
-            val hours: Int,
-            val minutes: Int,
-            val seconds: Int,
-            val totalDays: Long
-        )
 
-        private fun calculateDuration(
-            start: Calendar,
-            end: Calendar
-        ): DurationResult {
+private data class DurationResult(
+    val years: Int,
+    val months: Int,
+    val days: Int,
+    val hours: Int,
+    val minutes: Int,
+    val seconds: Int,
+    val totalDays: Long
+)
 
-            val cursor =
-                start.clone() as Calendar
+private fun calculateDuration(
+    start: Calendar,
+    end: Calendar
+): DurationResult {
 
-            var years = 0
-            var months = 0
+    val cursor = Calendar.getInstance()
+    cursor.timeInMillis = start.timeInMillis
 
-            while (true) {
+    var years = 0
+    var months = 0
+    var days = 0
 
-                val next =
-                    cursor.clone() as Calendar
+    // Years
+    while (true) {
 
-                next.add(
-                    Calendar.YEAR,
-                    1
-                )
+        val next = Calendar.getInstance()
+        next.timeInMillis = cursor.timeInMillis
 
-                if (next.timeInMillis <=
-                    end.timeInMillis
-                ) {
+        next.add(Calendar.YEAR, 1)
 
-                    cursor.timeInMillis =
-                        next.timeInMillis
+        if (next.timeInMillis <= end.timeInMillis) {
 
-                    years++
+            cursor.timeInMillis = next.timeInMillis
+            years++
 
-                } else {
-                    break
-                }
-            }
-
-            while (true) {
-
-                val next =
-                    cursor.clone() as Calendar
-
-                next.add(
-                    Calendar.MONTH,
-                    1
-                )
-
-                if (next.timeInMillis <=
-                    end.timeInMillis
-                ) {
-
-                    cursor.timeInMillis =
-                        next.timeInMillis
-
-                    months++
-
-                } else {
-                    break
-                }
-            }
-
-            var days = 0
-
-            while (true) {
-
-                val next =
-                    cursor.clone() as Calendar
-
-                next.add(
-                    Calendar.DAY_OF_MONTH,
-                    1
-                )
-
-                if (next.timeInMillis <=
-                    end.timeInMillis
-                ) {
-
-                    cursor.timeInMillis =
-                        next.timeInMillis
-
-                    days++
-
-                } else {
-                    break
-                }
-            }
-
-            val remaining =
-                end.timeInMillis -
-                        cursor.timeInMillis
-
-            val totalSeconds =
-                remaining / 1000L
-
-            val hours =
-                (totalSeconds / 3600L)
-                    .toInt()
-
-            val minutes =
-                ((totalSeconds % 3600L) / 60L)
-                    .toInt()
-
-            val seconds =
-                (totalSeconds % 60L)
-                    .toInt()
-
-            val totalDays =
-                (
-                    end.timeInMillis -
-                            start.timeInMillis
-                    ) / 86400000L
-
-            return DurationResult(
-                years = years,
-                months = months,
-                days = days,
-                hours = hours,
-                minutes = minutes,
-                seconds = seconds,
-                totalDays = totalDays
-            )
+        } else {
+            break
         }
     }
+
+    // Months
+    while (true) {
+
+        val next = Calendar.getInstance()
+        next.timeInMillis = cursor.timeInMillis
+
+        next.add(Calendar.MONTH, 1)
+
+        if (next.timeInMillis <= end.timeInMillis) {
+
+            cursor.timeInMillis = next.timeInMillis
+            months++
+
+        } else {
+            break
+        }
+    }
+
+    // Days
+    while (true) {
+
+        val next = Calendar.getInstance()
+        next.timeInMillis = cursor.timeInMillis
+
+        next.add(Calendar.DAY_OF_MONTH, 1)
+
+        if (next.timeInMillis <= end.timeInMillis) {
+
+            cursor.timeInMillis = next.timeInMillis
+            days++
+
+        } else {
+            break
+        }
+    }
+
+    val remaining =
+        end.timeInMillis - cursor.timeInMillis
+
+    val totalSeconds =
+        remaining / 1000L
+
+    val hours =
+        (totalSeconds / 3600L).toInt()
+
+    val minutes =
+        ((totalSeconds % 3600L) / 60L).toInt()
+
+    val seconds =
+        (totalSeconds % 60L).toInt()
+
+    val totalDays =
+        (
+            end.timeInMillis -
+                start.timeInMillis
+        ) / 86400000L
+
+    return DurationResult(
+        years = years,
+        months = months,
+        days = days,
+        hours = hours,
+        minutes = minutes,
+        seconds = seconds,
+        totalDays = totalDays
+    )
 }
+}
+}  
