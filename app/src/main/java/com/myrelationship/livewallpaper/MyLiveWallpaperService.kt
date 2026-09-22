@@ -997,7 +997,7 @@ class MyLiveWallpaperService : WallpaperService() {
                         "${together.days} Days",
                 centerX,
                 400f,
-                30f,
+                32f,
                 Color.WHITE,
                 true
             )
@@ -1034,7 +1034,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 together.totalDays.toString(),
                 centerX,
                 555f,
-                46f,
+                50f,
                 Color.WHITE,
                 true
             )
@@ -1148,7 +1148,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 married.totalDays.toString(),
                 centerX,
                 1145f,
-                46f,
+                50f,
                 Color.WHITE,
                 true
             )
@@ -1461,7 +1461,7 @@ private fun drawText(
                     values[i],
                     positions[i],
                     y,
-                    32f,
+                    35f,
                     Color.WHITE,
                     true
                 )
