@@ -1287,7 +1287,7 @@ if (isAnniversaryToday(anniversary)) {
                 time,
                 centerX,
                 230f,
-                56f,
+                78f,
                 Color.WHITE,
                 true
             )
@@ -1306,7 +1306,7 @@ if (isAnniversaryToday(anniversary)) {
                 canvas,
                 currentDate,
                 centerX,
-                265f,
+                285f,
                 16f,
                 Color.rgb(
                     145,
