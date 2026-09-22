@@ -1314,44 +1314,51 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // ============================================================
-        // TEXT
-        // ============================================================
+// TEXT
+// ============================================================
 
-        private fun drawText(
-            canvas: Canvas,
-            text: String,
-            x: Float,
-            y: Float,
-            size: Float,
-            color: Int,
-            bold: Boolean
-        ) {
+private fun drawText(
+    canvas: Canvas,
+    text: String,
+    x: Float,
+    y: Float,
+    size: Float,
+    color: Int,
+    bold: Boolean
+) {
 
-            paint.style =
-                Paint.Style.FILL
+    paint.style = Paint.Style.FILL
 
-            paint.color =
-                color
+    paint.color = color
 
-            paint.alpha = 255
+    paint.alpha = 255
 
-            paint.textSize =
-                size
+    paint.textSize = size
 
-            paint.textAlign =
-                Paint.Align.CENTER
+    paint.textAlign = Paint.Align.CENTER
 
-            paint.setFakeBoldText(
-                bold
+    paint.typeface =
+        if (bold) {
+            android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.BOLD
             )
-
-            canvas.drawText(
-                text,
-                x,
-                y,
-                paint
+        } else {
+            android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.NORMAL
             )
         }
+
+    paint.setFakeBoldText(false)
+
+    canvas.drawText(
+        text,
+        x,
+        y,
+        paint
+    )
+}
 
         // ============================================================
         // DIVIDER
