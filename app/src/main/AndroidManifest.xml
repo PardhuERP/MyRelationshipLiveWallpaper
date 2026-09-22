@@ -3,7 +3,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="My Relationship"
+        android:label="UsForever"
         android:supportsRtl="true">
 
         <activity
