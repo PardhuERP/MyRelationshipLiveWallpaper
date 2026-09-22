@@ -1287,7 +1287,7 @@ if (isAnniversaryToday(anniversary)) {
                 time,
                 centerX,
                 230f,
-                78f,
+                100f,
                 Color.WHITE,
                 true
             )
