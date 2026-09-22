@@ -72,7 +72,7 @@ class MainActivity : Activity() {
 
         val title = TextView(this)
 
-        title.text = "❤️ Relationship Wallpaper"
+        title.text = "❤️ UsForever wallpaper"
         title.textSize = 26f
         title.gravity = Gravity.CENTER
 
