@@ -38,6 +38,341 @@ class MyLiveWallpaperService : WallpaperService() {
 
         private var animationTime = 0L
 
+    // ============================================================
+// NEXT ANNIVERSARY
+// ============================================================
+
+private fun getNextAnniversary(
+    marriedStart: Calendar
+): Calendar {
+
+    val today = Calendar.getInstance()
+
+    val anniversary =
+        Calendar.getInstance()
+
+    anniversary.timeInMillis =
+        marriedStart.timeInMillis
+
+    anniversary.set(
+        Calendar.YEAR,
+        today.get(Calendar.YEAR)
+    )
+
+    anniversary.set(
+        Calendar.HOUR_OF_DAY,
+        0
+    )
+
+    anniversary.set(
+        Calendar.MINUTE,
+        0
+    )
+
+    anniversary.set(
+        Calendar.SECOND,
+        0
+    )
+
+    anniversary.set(
+        Calendar.MILLISECOND,
+        0
+    )
+
+    if (
+        anniversary.before(today) &&
+        !isSameDay(anniversary, today)
+    ) {
+
+        anniversary.add(
+            Calendar.YEAR,
+            1
+        )
+    }
+
+    return anniversary
+}
+
+// ============================================================
+// DAYS UNTIL ANNIVERSARY
+// ============================================================
+
+private fun calculateDaysUntil(
+    target: Calendar,
+    now: Calendar
+): Long {
+
+    val start = Calendar.getInstance()
+
+    start.timeInMillis =
+        now.timeInMillis
+
+    start.set(
+        Calendar.HOUR_OF_DAY,
+        0
+    )
+
+    start.set(
+        Calendar.MINUTE,
+        0
+    )
+
+    start.set(
+        Calendar.SECOND,
+        0
+    )
+
+    start.set(
+        Calendar.MILLISECOND,
+        0
+    )
+
+    val difference =
+        target.timeInMillis -
+                start.timeInMillis
+
+    return difference /
+            86400000L
+}
+
+// ============================================================
+// ANNIVERSARY CHECK
+// ============================================================
+
+private fun isAnniversaryToday(
+    anniversary: Calendar
+): Boolean {
+
+    val today =
+        Calendar.getInstance()
+
+    return isSameDay(
+        anniversary,
+        today
+    )
+}
+
+private fun isSameDay(
+    a: Calendar,
+    b: Calendar
+): Boolean {
+
+    return a.get(Calendar.YEAR) ==
+            b.get(Calendar.YEAR) &&
+            a.get(Calendar.DAY_OF_YEAR) ==
+            b.get(Calendar.DAY_OF_YEAR)
+}
+
+// ============================================================
+// ANNIVERSARY CELEBRATION
+// ============================================================
+
+private fun drawAnniversaryCelebration(
+    canvas: Canvas,
+    width: Float,
+    height: Float
+) {
+
+    val t =
+        animationTime / 1000.0
+
+    // --------------------------------------------------------
+    // FLOATING HEARTS
+    // --------------------------------------------------------
+
+    for (i in 0 until 35) {
+
+        val baseX =
+            ((i * 137) % width.toInt()).toFloat()
+
+        val speed =
+            12f + (i % 7) * 4f
+
+        val movement =
+            (
+                t * speed +
+                        i * 95f
+                ).toFloat()
+
+        val y =
+            height -
+                    (movement % (height + 200f))
+
+        val wave =
+            sin(
+                t * 1.5 +
+                        i
+            ) * 45.0
+
+        val x =
+            baseX +
+                    wave.toFloat()
+
+        val size =
+            7f +
+                    (i % 5) * 3f
+
+        drawHeartShape(
+            canvas,
+            x,
+            y,
+            size,
+            Color.argb(
+                130,
+                255,
+                40,
+                90
+            )
+        )
+    }
+
+    // --------------------------------------------------------
+    // FLOWER / PETAL PARTICLES
+    // --------------------------------------------------------
+
+    for (i in 0 until 45) {
+
+        val baseX =
+            ((i * 211) % width.toInt()).toFloat()
+
+        val speed =
+            18f + (i % 8) * 5f
+
+        val movement =
+            (
+                t * speed +
+                        i * 83f
+                ).toFloat()
+
+        val y =
+            height -
+                    (movement % (height + 250f))
+
+        val wind =
+            sin(
+                t * 1.8 +
+                        i * 0.7
+            ) * 90.0
+
+        val x =
+            baseX +
+                    wind.toFloat()
+
+        val rotation =
+            (
+                t * 90 +
+                        i * 37
+                ).toFloat()
+
+        drawPetal(
+            canvas,
+            x,
+            y,
+            5f + (i % 4),
+            rotation
+        )
+    }
+
+    // --------------------------------------------------------
+    // EXTRA GLOW
+    // --------------------------------------------------------
+
+    for (i in 0 until 18) {
+
+        val x =
+            ((i * 311) %
+                    width.toInt()).toFloat()
+
+        val y =
+            ((i * 173 +
+                    t * 35)
+                    % height)
+                .toFloat()
+
+        paint.style =
+            Paint.Style.FILL
+
+        paint.color =
+            Color.argb(
+                80,
+                255,
+                80,
+                120
+            )
+
+        canvas.drawCircle(
+            x,
+            y,
+            3f,
+            paint
+        )
+    }
+}
+
+// ============================================================
+// FLOWER PETAL
+// ============================================================
+
+private fun drawPetal(
+    canvas: Canvas,
+    x: Float,
+    y: Float,
+    size: Float,
+    rotation: Float
+) {
+
+    canvas.save()
+
+    canvas.rotate(
+        rotation,
+        x,
+        y
+    )
+
+    paint.style =
+        Paint.Style.FILL
+
+    paint.color =
+        Color.argb(
+            150,
+            255,
+            80,
+            120
+        )
+
+    path.reset()
+
+    path.moveTo(
+        x,
+        y - size
+    )
+
+    path.cubicTo(
+        x + size * 1.5f,
+        y - size * 0.5f,
+        x + size * 1.5f,
+        y + size * 0.8f,
+        x,
+        y + size
+    )
+
+    path.cubicTo(
+        x - size * 1.5f,
+        y + size * 0.8f,
+        x - size * 1.5f,
+        y - size * 0.5f,
+        x,
+        y - size
+    )
+
+    canvas.drawPath(
+        path,
+        paint
+    )
+
+    canvas.restore()
+}
+
         // ============================================================
         // SETTINGS
         // ============================================================
@@ -604,6 +939,32 @@ class MyLiveWallpaperService : WallpaperService() {
             val t =
                 animationTime / 1000.0
 
+// ========================================================
+// ANNIVERSARY CELEBRATION
+// ========================================================
+
+val marriedStart =
+    getDateFromSettings(
+        "married_date",
+        9,
+        Calendar.APRIL,
+        2025
+    )
+
+val anniversary =
+    getNextAnniversary(
+        marriedStart
+    )
+
+if (isAnniversaryToday(anniversary)) {
+
+    drawAnniversaryCelebration(
+        canvas,
+        width,
+        height
+    )
+}
+
             // --------------------------------------------------------
             // LARGE HEARTS
             // --------------------------------------------------------
@@ -1061,6 +1422,51 @@ class MyLiveWallpaperService : WallpaperService() {
                 together.minutes,
                 together.seconds
             )
+// ========================================================
+// NEXT ANNIVERSARY
+// ========================================================
+
+val nextAnniversary =
+    getNextAnniversary(marriedStart)
+
+val daysUntilAnniversary =
+    calculateDaysUntil(
+        nextAnniversary,
+        now
+    )
+
+drawText(
+    canvas,
+    "♥  NEXT ANNIVERSARY  ♥",
+    centerX,
+    1350f,
+    23f,
+    Color.rgb(255, 55, 90),
+    true
+)
+
+drawText(
+    canvas,
+    formatDisplayDate(nextAnniversary),
+    centerX,
+    1395f,
+    24f,
+    Color.WHITE,
+    true
+)
+
+if (!isAnniversaryToday(nextAnniversary)) {
+
+    drawText(
+        canvas,
+        "$daysUntilAnniversary DAYS TO GO",
+        centerX,
+        1435f,
+        14f,
+        Color.rgb(155, 158, 168),
+        false
+    )
+}
 
             // --------------------------------------------------------
             // RINGS
@@ -1313,7 +1719,50 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
-        // ============================================================
+    // ============================================================
+// NEXT ANNIVERSARY DATE
+// ============================================================
+
+private fun getNextAnniversaryDate(
+    marriedDate: Calendar
+): Calendar {
+
+    val today = Calendar.getInstance()
+
+    val anniversary =
+        Calendar.getInstance()
+
+    anniversary.set(
+        today.get(Calendar.YEAR),
+        marriedDate.get(Calendar.MONTH),
+        marriedDate.get(Calendar.DAY_OF_MONTH),
+        0,
+        0,
+        0
+    )
+
+    anniversary.set(
+        Calendar.MILLISECOND,
+        0
+    )
+
+    // If this year's anniversary has already passed,
+    // use next year's anniversary.
+    if (
+        anniversary.timeInMillis <
+        today.timeInMillis
+    ) {
+
+        anniversary.add(
+            Calendar.YEAR,
+            1
+        )
+    }
+
+    return anniversary
+}
+
+// ============================================================
 // TEXT
 // ============================================================
 
