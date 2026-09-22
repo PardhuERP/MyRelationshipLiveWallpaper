@@ -1426,9 +1426,17 @@ if (isAnniversaryToday(anniversary)) {
 // NEXT ANNIVERSARY
 // ========================================================
 
+val anniversaryStart =
+    getDateFromSettings(
+        "married_date",
+        9,
+        Calendar.APRIL,
+        2025
+    )
+
 val nextAnniversary =
     getNextAnniversary(
-        marriedStart
+        anniversaryStart
     )
 
 val daysUntilAnniversary =
