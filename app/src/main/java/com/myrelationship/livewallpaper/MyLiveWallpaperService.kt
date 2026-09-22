@@ -1,5 +1,9 @@
 package com.myrelationship.livewallpaper
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.RectF
+import android.net.Uri
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -29,6 +33,15 @@ class MyLiveWallpaperService : WallpaperService() {
         private val path = Path()
 
         private var animationTime = 0L
+
+        private val prefs =
+    getSharedPreferences(
+        "relationship_settings",
+        MODE_PRIVATE
+    )
+
+private var backgroundBitmap: Bitmap? = null
+private var loadedBackgroundUri: String? = null
 
         override fun onVisibilityChanged(isVisible: Boolean) {
             super.onVisibilityChanged(isVisible)
@@ -112,6 +125,10 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas.drawColor(
                     Color.rgb(4, 7, 13)
                 )
+                canvas.scale(
+    scaleX,
+    scaleY
+)
 
                 // ----------------------------------------------------
                 // DESIGN SIZE
@@ -1150,6 +1167,54 @@ class MyLiveWallpaperService : WallpaperService() {
                 )
             )
         }
+
+       // ============================================================
+        // LOAD BACKGROUND 
+        // ============================================================
+
+        
+        private fun loadBackgroundIfNeeded() {
+
+    val uriString = prefs.getString(
+        "background_uri",
+        null
+    )
+
+    if (uriString == loadedBackgroundUri) {
+        return
+    }
+
+    backgroundBitmap?.recycle()
+    backgroundBitmap = null
+
+    loadedBackgroundUri = uriString
+
+    if (uriString.isNullOrEmpty()) {
+        return
+    }
+
+    try {
+
+        val uri = Uri.parse(uriString)
+
+        val inputStream =
+            contentResolver.openInputStream(uri)
+
+        if (inputStream != null) {
+
+            backgroundBitmap =
+                BitmapFactory.decodeStream(
+                    inputStream
+                )
+
+            inputStream.close()
+        }
+
+    } catch (_: Exception) {
+
+        backgroundBitmap = null
+    }
+}
 
         // ============================================================
         // GLOW DOT
