@@ -105,9 +105,12 @@ class MyLiveWallpaperService : WallpaperService() {
                 val width = canvas.width.toFloat()
                 val height = canvas.height.toFloat()
 
-                drawBackground(canvas, width, height)
+                drawBackground(canvas)
 
-                val scale = min(width / 1080f, height / 2400f)
+                val scale = min(
+                    width / 1080f,
+                    height / 2400f
+                )
 
                 canvas.save()
 
@@ -138,16 +141,16 @@ class MyLiveWallpaperService : WallpaperService() {
             }
         }
 
-        private fun drawBackground(
-            canvas: Canvas,
-            width: Float,
-            height: Float
-        ) {
+        private fun drawBackground(canvas: Canvas) {
 
             canvas.drawColor(
                 Color.rgb(7, 10, 17)
             )
         }
+
+        // ------------------------------------------------------------
+        // ANIMATED BACKGROUND
+        // ------------------------------------------------------------
 
         private fun drawAnimatedBackground(
             canvas: Canvas,
@@ -155,12 +158,18 @@ class MyLiveWallpaperService : WallpaperService() {
             height: Float
         ) {
 
-            val t = animationTime / 1000.0
+            val t = animationTime / 1000f
 
-            // Slow moving red/pink curve on left
+            // LEFT WAVE
+
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 2.2f
-            paint.color = Color.argb(90, 255, 35, 90)
+            paint.color = Color.argb(
+                90,
+                255,
+                35,
+                90
+            )
 
             path.reset()
 
@@ -173,23 +182,39 @@ class MyLiveWallpaperService : WallpaperService() {
 
             for (i in 0..180) {
 
-                val x = -40f + i * 7f
+                val x =
+                    -40f + i * 7f
 
                 val wave =
-    (sin(i * 0.045 + t * 0.45) * 70.0).toFloat()
+                    sin(
+                        i * 0.045f +
+                                t * 0.45f
+                    ) * 70f
 
                 val y =
                     startY +
-                            i * 3.0f +
+                            i * 3f +
                             wave
 
-                path.lineTo(x, y)
+                path.lineTo(
+                    x,
+                    y
+                )
             }
 
-            canvas.drawPath(path, paint)
+            canvas.drawPath(
+                path,
+                paint
+            )
 
-            // Right side curve
-            paint.color = Color.argb(70, 255, 50, 100)
+            // RIGHT WAVE
+
+            paint.color = Color.argb(
+                70,
+                255,
+                50,
+                100
+            )
 
             path.reset()
 
@@ -201,34 +226,55 @@ class MyLiveWallpaperService : WallpaperService() {
             for (i in 0..180) {
 
                 val x =
-                    width + 40f - i * 7f
+                    width + 40f -
+                            i * 7f
 
                 val wave =
-    (cos(i * 0.05 + t * 0.4) * 60.0).toFloat()
+                    cos(
+                        i * 0.05f +
+                                t * 0.4f
+                    ) * 60f
 
                 val y =
                     height * 0.55f +
                             i * 3.1f +
                             wave
 
-                path.lineTo(x, y)
+                path.lineTo(
+                    x,
+                    y
+                )
             }
 
-            canvas.drawPath(path, paint)
+            canvas.drawPath(
+                path,
+                paint
+            )
 
-            // Small floating particles
+            // FLOATING PARTICLES
+
             paint.style = Paint.Style.FILL
+
+            val safeWidth =
+                width.toInt().coerceAtLeast(1)
 
             for (i in 0 until 18) {
 
                 val x =
-                    ((i * 173) % width.toInt()).toFloat()
+                    ((i * 173) % safeWidth).toFloat()
+
+                val speed =
+                    8f + (i % 5)
 
                 val movement =
-    ((t * (8 + i % 5)) % height.toDouble()).toFloat()
+                    (t * speed) % height
 
                 val y =
-                    (height - movement + i * 130f) % height
+                    (
+                        height -
+                                movement +
+                                i * 130f
+                        ) % height
 
                 paint.color =
                     Color.argb(
@@ -247,24 +293,25 @@ class MyLiveWallpaperService : WallpaperService() {
             }
         }
 
+        // ------------------------------------------------------------
+        // MAIN CONTENT
+        // ------------------------------------------------------------
+
         private fun drawMainContent(
             canvas: Canvas,
             width: Float,
             height: Float
         ) {
 
-            val centerX = width / 2f
+            val centerX =
+                width / 2f
 
-            /*
-             * TOP HEART
-             */
-
-            val heartY = 95f
+            // TOP HEART
 
             drawGlowingHeart(
                 canvas,
                 centerX,
-                heartY
+                95f
             )
 
             drawText(
@@ -273,18 +320,21 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 150f,
                 16f,
-                Color.rgb(145, 148, 158),
+                Color.rgb(
+                    145,
+                    148,
+                    158
+                ),
                 false
             )
 
-            /*
-             * CLOCK
-             */
+            // CLOCK
 
-            val time = SimpleDateFormat(
-                "HH:mm:ss",
-                Locale.getDefault()
-            ).format(Date())
+            val time =
+                SimpleDateFormat(
+                    "HH:mm:ss",
+                    Locale.getDefault()
+                ).format(Date())
 
             drawText(
                 canvas,
@@ -296,9 +346,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 true
             )
 
-            /*
-             * TOGETHER
-             */
+            // CURRENT TIME / TOGETHER
 
             drawText(
                 canvas,
@@ -306,13 +354,22 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 275f,
                 19f,
-                Color.rgb(255, 55, 90),
+                Color.rgb(
+                    255,
+                    55,
+                    90
+                ),
                 true
             )
 
-            val now = Calendar.getInstance()
+            val now =
+                Calendar.getInstance()
 
-            val togetherStart = Calendar.getInstance()
+            // TOGETHER START
+
+            val togetherStart =
+                Calendar.getInstance()
+
             togetherStart.set(
                 2006,
                 Calendar.FEBRUARY,
@@ -321,7 +378,11 @@ class MyLiveWallpaperService : WallpaperService() {
                 0,
                 0
             )
-            togetherStart.set(Calendar.MILLISECOND, 0)
+
+            togetherStart.set(
+                Calendar.MILLISECOND,
+                0
+            )
 
             val together =
                 calculateDuration(
@@ -331,7 +392,9 @@ class MyLiveWallpaperService : WallpaperService() {
 
             drawText(
                 canvas,
-                "${together.years} Years  •  ${together.months} Months  •  ${together.days} Days",
+                "${together.years} Years  •  " +
+                        "${together.months} Months  •  " +
+                        "${together.days} Days",
                 centerX,
                 325f,
                 27f,
@@ -345,7 +408,11 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 365f,
                 14f,
-                Color.rgb(145, 148, 158),
+                Color.rgb(
+                    145,
+                    148,
+                    158
+                ),
                 false
             )
 
@@ -355,9 +422,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 405f
             )
 
-            /*
-             * TOTAL TOGETHER DAYS
-             */
+            // TOTAL TOGETHER DAYS
 
             drawText(
                 canvas,
@@ -375,7 +440,11 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 480f,
                 11f,
-                Color.rgb(125, 128, 138),
+                Color.rgb(
+                    125,
+                    128,
+                    138
+                ),
                 false
             )
 
@@ -388,9 +457,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 together.seconds
             )
 
-            /*
-             * WEDDING RINGS
-             */
+            // RINGS
 
             drawWeddingRings(
                 canvas,
@@ -398,9 +465,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 650f
             )
 
-            /*
-             * MARRIED
-             */
+            // MARRIED
 
             drawText(
                 canvas,
@@ -408,11 +473,16 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 730f,
                 19f,
-                Color.rgb(255, 55, 90),
+                Color.rgb(
+                    255,
+                    55,
+                    90
+                ),
                 true
             )
 
-            val marriedStart = Calendar.getInstance()
+            val marriedStart =
+                Calendar.getInstance()
 
             marriedStart.set(
                 2025,
@@ -423,7 +493,10 @@ class MyLiveWallpaperService : WallpaperService() {
                 0
             )
 
-            marriedStart.set(Calendar.MILLISECOND, 0)
+            marriedStart.set(
+                Calendar.MILLISECOND,
+                0
+            )
 
             val married =
                 calculateDuration(
@@ -433,7 +506,9 @@ class MyLiveWallpaperService : WallpaperService() {
 
             drawText(
                 canvas,
-                "${married.years} Years  •  ${married.months} Months  •  ${married.days} Days",
+                "${married.years} Years  •  " +
+                        "${married.months} Months  •  " +
+                        "${married.days} Days",
                 centerX,
                 780f,
                 27f,
@@ -447,7 +522,11 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 820f,
                 14f,
-                Color.rgb(145, 148, 158),
+                Color.rgb(
+                    145,
+                    148,
+                    158
+                ),
                 false
             )
 
@@ -457,9 +536,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 860f
             )
 
-            /*
-             * MARRIED TOTAL DAYS
-             */
+            // MARRIED TOTAL DAYS
 
             drawText(
                 canvas,
@@ -477,7 +554,11 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 935f,
                 11f,
-                Color.rgb(125, 128, 138),
+                Color.rgb(
+                    125,
+                    128,
+                    138
+                ),
                 false
             )
 
@@ -490,9 +571,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 married.seconds
             )
 
-            /*
-             * BOTTOM MESSAGE
-             */
+            // BOTTOM MESSAGE
 
             drawText(
                 canvas,
@@ -500,13 +579,13 @@ class MyLiveWallpaperService : WallpaperService() {
                 centerX,
                 1080f,
                 17f,
-                Color.rgb(255, 55, 90),
+                Color.rgb(
+                    255,
+                    55,
+                    90
+                ),
                 true
             )
-
-            /*
-             * Small glowing dots
-             */
 
             drawGlowDot(
                 canvas,
@@ -521,6 +600,10 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // TEXT
+        // ------------------------------------------------------------
+
         private fun drawText(
             canvas: Canvas,
             text: String,
@@ -531,16 +614,21 @@ class MyLiveWallpaperService : WallpaperService() {
             bold: Boolean
         ) {
 
-            paint.style = Paint.Style.FILL
-            paint.color = color
-            paint.textSize = size
-            paint.textAlign = Paint.Align.CENTER
+            paint.style =
+                Paint.Style.FILL
 
-            if (bold) {
-                paint.setFakeBoldText(true)
-            } else {
-                paint.setFakeBoldText(false)
-            }
+            paint.color =
+                color
+
+            paint.textSize =
+                size
+
+            paint.textAlign =
+                Paint.Align.CENTER
+
+            paint.setFakeBoldText(
+                bold
+            )
 
             canvas.drawText(
                 text,
@@ -550,19 +638,28 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // DIVIDER
+        // ------------------------------------------------------------
+
         private fun drawDivider(
             canvas: Canvas,
             centerX: Float,
             y: Float
         ) {
 
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 1f
-            paint.color = Color.rgb(
-                38,
-                42,
-                51
-            )
+            paint.style =
+                Paint.Style.STROKE
+
+            paint.strokeWidth =
+                1f
+
+            paint.color =
+                Color.rgb(
+                    38,
+                    42,
+                    51
+                )
 
             canvas.drawLine(
                 centerX - 390f,
@@ -573,6 +670,10 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // HOURS / MINUTES / SECONDS
+        // ------------------------------------------------------------
+
         private fun drawTimeColumns(
             canvas: Canvas,
             centerX: Float,
@@ -582,35 +683,38 @@ class MyLiveWallpaperService : WallpaperService() {
             seconds: Int
         ) {
 
-            val positions = floatArrayOf(
-                centerX - 210f,
-                centerX,
-                centerX + 210f
-            )
-
-            val values = arrayOf(
-                String.format(
-                    Locale.getDefault(),
-                    "%02d",
-                    hours
-                ),
-                String.format(
-                    Locale.getDefault(),
-                    "%02d",
-                    minutes
-                ),
-                String.format(
-                    Locale.getDefault(),
-                    "%02d",
-                    seconds
+            val positions =
+                floatArrayOf(
+                    centerX - 210f,
+                    centerX,
+                    centerX + 210f
                 )
-            )
 
-            val labels = arrayOf(
-                "HOURS",
-                "MINUTES",
-                "SECONDS"
-            )
+            val values =
+                arrayOf(
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d",
+                        hours
+                    ),
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d",
+                        minutes
+                    ),
+                    String.format(
+                        Locale.getDefault(),
+                        "%02d",
+                        seconds
+                    )
+                )
+
+            val labels =
+                arrayOf(
+                    "HOURS",
+                    "MINUTES",
+                    "SECONDS"
+                )
 
             for (i in 0..2) {
 
@@ -639,13 +743,18 @@ class MyLiveWallpaperService : WallpaperService() {
                 )
             }
 
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 1f
-            paint.color = Color.rgb(
-                55,
-                58,
-                67
-            )
+            paint.style =
+                Paint.Style.STROKE
+
+            paint.strokeWidth =
+                1f
+
+            paint.color =
+                Color.rgb(
+                    55,
+                    58,
+                    67
+                )
 
             canvas.drawLine(
                 centerX - 105f,
@@ -664,6 +773,10 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // HEART
+        // ------------------------------------------------------------
+
         private fun drawGlowingHeart(
             canvas: Canvas,
             x: Float,
@@ -674,12 +787,14 @@ class MyLiveWallpaperService : WallpaperService() {
                 1f +
                         sin(
                             animationTime / 180.0
-                        ).toFloat() * 0.10f
+                        ).toFloat() *
+                        0.10f
 
             val glowRadius =
                 38f * pulse
 
-            paint.style = Paint.Style.FILL
+            paint.style =
+                Paint.Style.FILL
 
             for (i in 5 downTo 1) {
 
@@ -757,14 +872,21 @@ class MyLiveWallpaperService : WallpaperService() {
                 cy + size
             )
 
-            paint.style = Paint.Style.FILL
-            paint.color = color
+            paint.style =
+                Paint.Style.FILL
+
+            paint.color =
+                color
 
             canvas.drawPath(
                 path,
                 paint
             )
         }
+
+        // ------------------------------------------------------------
+        // WEDDING RINGS
+        // ------------------------------------------------------------
 
         private fun drawWeddingRings(
             canvas: Canvas,
@@ -778,10 +900,14 @@ class MyLiveWallpaperService : WallpaperService() {
                 ).toFloat()
 
             val glow =
-                30f + pulse * 5f
+                30f +
+                        pulse * 5f
 
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 5f
+            paint.style =
+                Paint.Style.STROKE
+
+            paint.strokeWidth =
+                5f
 
             for (i in 1..4) {
 
@@ -822,7 +948,8 @@ class MyLiveWallpaperService : WallpaperService() {
                 paint
             )
 
-            paint.style = Paint.Style.FILL
+            paint.style =
+                Paint.Style.FILL
 
             drawHeartShape(
                 canvas,
@@ -837,13 +964,18 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // GLOW DOT
+        // ------------------------------------------------------------
+
         private fun drawGlowDot(
             canvas: Canvas,
             x: Float,
             y: Float
         ) {
 
-            paint.style = Paint.Style.FILL
+            paint.style =
+                Paint.Style.FILL
 
             paint.color =
                 Color.argb(
@@ -875,113 +1007,168 @@ class MyLiveWallpaperService : WallpaperService() {
             )
         }
 
+        // ------------------------------------------------------------
+        // DURATION CALCULATION
+        // ------------------------------------------------------------
 
-private data class DurationResult(
-    val years: Int,
-    val months: Int,
-    val days: Int,
-    val hours: Int,
-    val minutes: Int,
-    val seconds: Int,
-    val totalDays: Long
-)
+        private fun calculateDuration(
+            start: Calendar,
+            end: Calendar
+        ): DurationResult {
 
-private fun calculateDuration(
-    start: Calendar,
-    end: Calendar
-): DurationResult {
+            val cursor =
+                Calendar.getInstance()
 
-    val cursor = Calendar.getInstance()
-    cursor.timeInMillis = start.timeInMillis
-
-    var years = 0
-    var months = 0
-    var days = 0
-
-    // Years
-    while (true) {
-
-        val next = Calendar.getInstance()
-        next.timeInMillis = cursor.timeInMillis
-
-        next.add(Calendar.YEAR, 1)
-
-        if (next.timeInMillis <= end.timeInMillis) {
-
-            cursor.timeInMillis = next.timeInMillis
-            years++
-
-        } else {
-            break
-        }
-    }
-
-    // Months
-    while (true) {
-
-        val next = Calendar.getInstance()
-        next.timeInMillis = cursor.timeInMillis
-
-        next.add(Calendar.MONTH, 1)
-
-        if (next.timeInMillis <= end.timeInMillis) {
-
-            cursor.timeInMillis = next.timeInMillis
-            months++
-
-        } else {
-            break
-        }
-    }
-
-    // Days
-    while (true) {
-
-        val next = Calendar.getInstance()
-        next.timeInMillis = cursor.timeInMillis
-
-        next.add(Calendar.DAY_OF_MONTH, 1)
-
-        if (next.timeInMillis <= end.timeInMillis) {
-
-            cursor.timeInMillis = next.timeInMillis
-            days++
-
-        } else {
-            break
-        }
-    }
-
-    val remaining =
-        end.timeInMillis - cursor.timeInMillis
-
-    val totalSeconds =
-        remaining / 1000L
-
-    val hours =
-        (totalSeconds / 3600L).toInt()
-
-    val minutes =
-        ((totalSeconds % 3600L) / 60L).toInt()
-
-    val seconds =
-        (totalSeconds % 60L).toInt()
-
-    val totalDays =
-        (
-            end.timeInMillis -
+            cursor.timeInMillis =
                 start.timeInMillis
-        ) / 86400000L
 
-    return DurationResult(
-        years = years,
-        months = months,
-        days = days,
-        hours = hours,
-        minutes = minutes,
-        seconds = seconds,
-        totalDays = totalDays
-        )
-      }
+            var years = 0
+            var months = 0
+            var days = 0
+
+            // YEARS
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.YEAR,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    years++
+
+                } else {
+
+                    break
+                }
+            }
+
+            // MONTHS
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.MONTH,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    months++
+
+                } else {
+
+                    break
+                }
+            }
+
+            // DAYS
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.DAY_OF_MONTH,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    days++
+
+                } else {
+
+                    break
+                }
+            }
+
+            val remaining =
+                end.timeInMillis -
+                        cursor.timeInMillis
+
+            val totalSeconds =
+                remaining / 1000L
+
+            val hours =
+                (totalSeconds / 3600L)
+                    .toInt()
+
+            val minutes =
+                (
+                    (totalSeconds % 3600L) /
+                            60L
+                    ).toInt()
+
+            val seconds =
+                (totalSeconds % 60L)
+                    .toInt()
+
+            val totalDays =
+                (
+                    end.timeInMillis -
+                            start.timeInMillis
+                    ) / 86400000L
+
+            return DurationResult(
+                years = years,
+                months = months,
+                days = days,
+                hours = hours,
+                minutes = minutes,
+                seconds = seconds,
+                totalDays = totalDays
+            )
+        }
     }
+
+    // ------------------------------------------------------------
+    // DATA CLASS
+    // ------------------------------------------------------------
+
+    private data class DurationResult(
+        val years: Int,
+        val months: Int,
+        val days: Int,
+        val hours: Int,
+        val minutes: Int,
+        val seconds: Int,
+        val totalDays: Long
+    )
 }
