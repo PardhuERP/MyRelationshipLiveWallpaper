@@ -14,6 +14,18 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
+private data class DurationResult(
+    val years: Int,
+    val months: Int,
+    val days: Int,
+    val hours: Int,
+    val minutes: Int,
+    val seconds: Int,
+    val totalDays: Long
+)
+
+class MyLiveWallpaperService : WallpaperService() {
+
 class MyLiveWallpaperService : WallpaperService() {
 
     override fun onCreateEngine(): Engine {
@@ -1299,16 +1311,6 @@ class MyLiveWallpaperService : WallpaperService() {
         // ---------------------------------------------------------
         // DURATION CALCULATION
         // ---------------------------------------------------------
-
-        private data class DurationResult(
-            val years: Int,
-            val months: Int,
-            val days: Int,
-            val hours: Int,
-            val minutes: Int,
-            val seconds: Int,
-            val totalDays: Long
-        )
 
         private fun calculateDuration(
             start: Calendar,
