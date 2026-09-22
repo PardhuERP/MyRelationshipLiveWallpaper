@@ -2,12 +2,11 @@ package com.myrelationship.livewallpaper
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.RectF
-import android.net.Uri
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.net.Uri
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import java.text.SimpleDateFormat
@@ -15,7 +14,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.cos
-import kotlin.math.min
 import kotlin.math.sin
 
 class MyLiveWallpaperService : WallpaperService() {
@@ -34,14 +32,25 @@ class MyLiveWallpaperService : WallpaperService() {
 
         private var animationTime = 0L
 
-        private val prefs =
-    getSharedPreferences(
-        "relationship_settings",
-        MODE_PRIVATE
-    )
+        // ============================================================
+        // SETTINGS
+        // ============================================================
 
-private var backgroundBitmap: Bitmap? = null
-private var loadedBackgroundUri: String? = null
+        private val prefs = getSharedPreferences(
+            "relationship_settings",
+            MODE_PRIVATE
+        )
+
+        // ============================================================
+        // BACKGROUND IMAGE
+        // ============================================================
+
+        private var backgroundBitmap: Bitmap? = null
+        private var loadedBackgroundUri: String? = null
+
+        // ============================================================
+        // WALLPAPER LIFECYCLE
+        // ============================================================
 
         override fun onVisibilityChanged(isVisible: Boolean) {
             super.onVisibilityChanged(isVisible)
@@ -71,6 +80,19 @@ private var loadedBackgroundUri: String? = null
             super.onSurfaceDestroyed(holder)
         }
 
+        override fun onDestroy() {
+            stopAnimation()
+
+            backgroundBitmap?.recycle()
+            backgroundBitmap = null
+
+            super.onDestroy()
+        }
+
+        // ============================================================
+        // START ANIMATION
+        // ============================================================
+
         private fun startAnimation() {
 
             if (running) return
@@ -96,6 +118,10 @@ private var loadedBackgroundUri: String? = null
             drawingThread?.start()
         }
 
+        // ============================================================
+        // STOP ANIMATION
+        // ============================================================
+
         private fun stopAnimation() {
 
             running = false
@@ -105,7 +131,7 @@ private var loadedBackgroundUri: String? = null
         }
 
         // ============================================================
-        // WALLPAPER DRAWING
+        // MAIN WALLPAPER DRAWING
         // ============================================================
 
         private fun drawWallpaper() {
@@ -122,13 +148,13 @@ private var loadedBackgroundUri: String? = null
                 val screenWidth = canvas.width.toFloat()
                 val screenHeight = canvas.height.toFloat()
 
+                // ----------------------------------------------------
+                // BASE COLOR
+                // ----------------------------------------------------
+
                 canvas.drawColor(
                     Color.rgb(4, 7, 13)
                 )
-                canvas.scale(
-    scaleX,
-    scaleY
-)
 
                 // ----------------------------------------------------
                 // DESIGN SIZE
@@ -137,15 +163,15 @@ private var loadedBackgroundUri: String? = null
                 val designWidth = 1080f
                 val designHeight = 2400f
 
-                /*
-                 * Scale independently so the complete design fills
-                 * the complete wallpaper surface.
-                 *
-                 * This matches the approach you requested.
-                 */
+                // ----------------------------------------------------
+                // SCREEN SCALE
+                // ----------------------------------------------------
 
-                val scaleX = screenWidth / designWidth
-                val scaleY = screenHeight / designHeight
+                val scaleX =
+                    screenWidth / designWidth
+
+                val scaleY =
+                    screenHeight / designHeight
 
                 canvas.save()
 
@@ -154,11 +180,35 @@ private var loadedBackgroundUri: String? = null
                     scaleY
                 )
 
+                // ----------------------------------------------------
+                // LOAD IMAGE IF REQUIRED
+                // ----------------------------------------------------
+
+                loadBackgroundIfNeeded()
+
+                // ----------------------------------------------------
+                // BACKGROUND IMAGE
+                // ----------------------------------------------------
+
+                drawBackgroundImage(
+                    canvas,
+                    designWidth,
+                    designHeight
+                )
+
+                // ----------------------------------------------------
+                // BACKGROUND EFFECTS
+                // ----------------------------------------------------
+
                 drawBackgroundEffects(
                     canvas,
                     designWidth,
                     designHeight
                 )
+
+                // ----------------------------------------------------
+                // MAIN CONTENT
+                // ----------------------------------------------------
 
                 drawMainContent(
                     canvas,
@@ -177,7 +227,174 @@ private var loadedBackgroundUri: String? = null
         }
 
         // ============================================================
-        // BACKGROUND
+        // BACKGROUND IMAGE LOADER
+        // ============================================================
+
+        private fun loadBackgroundIfNeeded() {
+
+            val uriString = prefs.getString(
+                "background_uri",
+                null
+            )
+
+            // Nothing changed
+            if (uriString == loadedBackgroundUri) {
+                return
+            }
+
+            // Remove old bitmap
+            backgroundBitmap?.recycle()
+            backgroundBitmap = null
+
+            loadedBackgroundUri = uriString
+
+            if (uriString.isNullOrEmpty()) {
+                return
+            }
+
+            try {
+
+                val uri = Uri.parse(uriString)
+
+                val inputStream =
+                    contentResolver.openInputStream(uri)
+
+                if (inputStream != null) {
+
+                    backgroundBitmap =
+                        BitmapFactory.decodeStream(
+                            inputStream
+                        )
+
+                    inputStream.close()
+                }
+
+            } catch (_: Exception) {
+
+                backgroundBitmap = null
+            }
+        }
+
+        // ============================================================
+        // DRAW BACKGROUND IMAGE
+        // ============================================================
+
+        private fun drawBackgroundImage(
+            canvas: Canvas,
+            width: Float,
+            height: Float
+        ) {
+
+            val bitmap =
+                backgroundBitmap ?: return
+
+            if (bitmap.isRecycled) {
+                return
+            }
+
+            val srcWidth =
+                bitmap.width.toFloat()
+
+            val srcHeight =
+                bitmap.height.toFloat()
+
+            if (srcWidth <= 0f || srcHeight <= 0f) {
+                return
+            }
+
+            // --------------------------------------------------------
+            // CENTER-CROP
+            // --------------------------------------------------------
+
+            val sourceRatio =
+                srcWidth / srcHeight
+
+            val targetRatio =
+                width / height
+
+            var srcLeft = 0f
+            var srcTop = 0f
+            var srcRight = srcWidth
+            var srcBottom = srcHeight
+
+            if (sourceRatio > targetRatio) {
+
+                // Image is wider
+                val newWidth =
+                    srcHeight * targetRatio
+
+                srcLeft =
+                    (srcWidth - newWidth) / 2f
+
+                srcRight =
+                    srcLeft + newWidth
+
+            } else {
+
+                // Image is taller
+                val newHeight =
+                    srcWidth / targetRatio
+
+                srcTop =
+                    (srcHeight - newHeight) / 2f
+
+                srcBottom =
+                    srcTop + newHeight
+            }
+
+            val srcRect =
+                android.graphics.RectF(
+                    srcLeft,
+                    srcTop,
+                    srcRight,
+                    srcBottom
+                )
+
+            val dstRect =
+                android.graphics.RectF(
+                    0f,
+                    0f,
+                    width,
+                    height
+                )
+
+            paint.style =
+                Paint.Style.FILL
+
+            paint.alpha = 255
+
+            canvas.drawBitmap(
+                bitmap,
+                null,
+                dstRect,
+                paint
+            )
+
+            // --------------------------------------------------------
+            // DARK OVERLAY
+            // --------------------------------------------------------
+
+            paint.color =
+                Color.argb(
+                    105,
+                    0,
+                    0,
+                    0
+                )
+
+            canvas.drawRect(
+                0f,
+                0f,
+                width,
+                height,
+                paint
+            )
+
+            paint.alpha = 255
+        }
+
+        // ============================================================
+        // BACKGROUND EFFECTS
         // ============================================================
 
         private fun drawBackgroundEffects(
@@ -186,10 +403,11 @@ private var loadedBackgroundUri: String? = null
             height: Float
         ) {
 
-            val t = animationTime / 1000.0
+            val t =
+                animationTime / 1000.0
 
             // --------------------------------------------------------
-            // Large soft heart silhouettes
+            // LARGE HEARTS
             // --------------------------------------------------------
 
             drawLargeHeart(
@@ -233,7 +451,7 @@ private var loadedBackgroundUri: String? = null
             )
 
             // --------------------------------------------------------
-            // Floating hearts
+            // SMALL HEARTS
             // --------------------------------------------------------
 
             drawSmallHeart(
@@ -277,21 +495,26 @@ private var loadedBackgroundUri: String? = null
             )
 
             // --------------------------------------------------------
-            // Animated glowing curves
+            // LEFT CURVE
             // --------------------------------------------------------
 
-            paint.style = Paint.Style.STROKE
+            paint.style =
+                Paint.Style.STROKE
+
             paint.strokeWidth = 2.2f
-            paint.color = Color.argb(
-                100,
-                255,
-                30,
-                85
-            )
+
+            paint.color =
+                Color.argb(
+                    100,
+                    255,
+                    30,
+                    85
+                )
 
             path.reset()
 
-            val leftStart = height * 0.36f
+            val leftStart =
+                height * 0.36f
 
             path.moveTo(
                 -100f,
@@ -300,16 +523,18 @@ private var loadedBackgroundUri: String? = null
 
             for (i in 0..220) {
 
-                val x = -100f + i * 6f
+                val x =
+                    -100f + i * 6f
 
                 val wave =
                     sin(
-                        i * 0.045 + t * 0.45
+                        i * 0.045 +
+                                t * 0.45
                     ) * 65.0
 
                 val y =
                     leftStart +
-                            i * 4.0f +
+                            i * 4f +
                             wave.toFloat()
 
                 path.lineTo(
@@ -324,15 +549,16 @@ private var loadedBackgroundUri: String? = null
             )
 
             // --------------------------------------------------------
-            // Right curve
+            // RIGHT CURVE
             // --------------------------------------------------------
 
-            paint.color = Color.argb(
-                80,
-                255,
-                40,
-                100
-            )
+            paint.color =
+                Color.argb(
+                    80,
+                    255,
+                    40,
+                    100
+                )
 
             path.reset()
 
@@ -344,11 +570,13 @@ private var loadedBackgroundUri: String? = null
             for (i in 0..220) {
 
                 val x =
-                    width + 100f - i * 6f
+                    width + 100f -
+                            i * 6f
 
                 val wave =
                     cos(
-                        i * 0.05 + t * 0.40
+                        i * 0.05 +
+                                t * 0.40
                     ) * 60.0
 
                 val y =
@@ -368,21 +596,24 @@ private var loadedBackgroundUri: String? = null
             )
 
             // --------------------------------------------------------
-            // Floating particles
+            // FLOATING PARTICLES
             // --------------------------------------------------------
 
-            paint.style = Paint.Style.FILL
+            paint.style =
+                Paint.Style.FILL
 
             for (i in 0 until 45) {
 
                 val x =
-                    ((i * 173) % width.toInt()).toFloat()
+                    ((i * 173) %
+                            width.toInt()).toFloat()
 
                 val movement =
                     (
-                        t * (8 + i % 6)
-                        % height.toDouble()
-                    ).toFloat()
+                        t *
+                                (8 + i % 6) %
+                                height.toDouble()
+                        ).toFloat()
 
                 val y =
                     (
@@ -392,14 +623,16 @@ private var loadedBackgroundUri: String? = null
                         ) % height
 
                 val alpha =
-                    25 + (i % 4) * 12
+                    25 +
+                            (i % 4) * 12
 
-                paint.color = Color.argb(
-                    alpha,
-                    255,
-                    40,
-                    90
-                )
+                paint.color =
+                    Color.argb(
+                        alpha,
+                        255,
+                        40,
+                        90
+                    )
 
                 canvas.drawCircle(
                     x,
@@ -410,16 +643,18 @@ private var loadedBackgroundUri: String? = null
             }
 
             // --------------------------------------------------------
-            // Glowing dots
+            // GLOW DOTS
             // --------------------------------------------------------
 
             for (i in 0 until 15) {
 
                 val x =
-                    ((i * 271) % width.toInt()).toFloat()
+                    ((i * 271) %
+                            width.toInt()).toFloat()
 
                 val y =
-                    ((i * 191) % height.toInt()).toFloat()
+                    ((i * 191) %
+                            height.toInt()).toFloat()
 
                 drawGlowDot(
                     canvas,
@@ -439,7 +674,8 @@ private var loadedBackgroundUri: String? = null
             height: Float
         ) {
 
-            val centerX = width / 2f
+            val centerX =
+                width / 2f
 
             // ========================================================
             // TOP HEART
@@ -457,7 +693,11 @@ private var loadedBackgroundUri: String? = null
                 centerX,
                 170f,
                 18f,
-                Color.rgb(155, 158, 168),
+                Color.rgb(
+                    155,
+                    158,
+                    168
+                ),
                 false
             )
 
@@ -482,6 +722,30 @@ private var loadedBackgroundUri: String? = null
             )
 
             // ========================================================
+            // CURRENT DATE
+            // ========================================================
+
+            val currentDate =
+                SimpleDateFormat(
+                    "dd MMMM yyyy",
+                    Locale.getDefault()
+                ).format(Date())
+
+            drawText(
+                canvas,
+                currentDate,
+                centerX,
+                265f,
+                16f,
+                Color.rgb(
+                    145,
+                    148,
+                    158
+                ),
+                false
+            )
+
+            // ========================================================
             // TOGETHER
             // ========================================================
 
@@ -489,7 +753,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 "♥  TOGETHER FOR  ♥",
                 centerX,
-                315f,
+                335f,
                 25f,
                 Color.rgb(
                     255,
@@ -503,21 +767,12 @@ private var loadedBackgroundUri: String? = null
                 Calendar.getInstance()
 
             val togetherStart =
-                Calendar.getInstance()
-
-            togetherStart.set(
-                2006,
-                Calendar.FEBRUARY,
-                14,
-                0,
-                0,
-                0
-            )
-
-            togetherStart.set(
-                Calendar.MILLISECOND,
-                0
-            )
+                getDateFromSettings(
+                    "together_date",
+                    14,
+                    Calendar.FEBRUARY,
+                    2006
+                )
 
             val together =
                 calculateDuration(
@@ -531,7 +786,7 @@ private var loadedBackgroundUri: String? = null
                         "${together.months} Months  •  " +
                         "${together.days} Days",
                 centerX,
-                380f,
+                400f,
                 30f,
                 Color.WHITE,
                 true
@@ -539,9 +794,12 @@ private var loadedBackgroundUri: String? = null
 
             drawText(
                 canvas,
-                "Since 14 February 2006",
+                "Since " +
+                        formatDisplayDate(
+                            togetherStart
+                        ),
                 centerX,
-                425f,
+                445f,
                 17f,
                 Color.rgb(
                     155,
@@ -554,7 +812,7 @@ private var loadedBackgroundUri: String? = null
             drawDivider(
                 canvas,
                 centerX,
-                470f
+                490f
             )
 
             // ========================================================
@@ -565,7 +823,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 together.totalDays.toString(),
                 centerX,
-                535f,
+                555f,
                 46f,
                 Color.WHITE,
                 true
@@ -575,7 +833,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 "TOTAL DAYS",
                 centerX,
-                565f,
+                585f,
                 13f,
                 Color.rgb(
                     130,
@@ -588,7 +846,7 @@ private var loadedBackgroundUri: String? = null
             drawTimeColumns(
                 canvas,
                 centerX,
-                635f,
+                655f,
                 together.hours,
                 together.minutes,
                 together.seconds
@@ -601,7 +859,7 @@ private var loadedBackgroundUri: String? = null
             drawWeddingRings(
                 canvas,
                 centerX,
-                795f
+                815f
             )
 
             // ========================================================
@@ -612,7 +870,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 "♥  MARRIED FOR  ♥",
                 centerX,
-                900f,
+                920f,
                 25f,
                 Color.rgb(
                     255,
@@ -623,21 +881,12 @@ private var loadedBackgroundUri: String? = null
             )
 
             val marriedStart =
-                Calendar.getInstance()
-
-            marriedStart.set(
-                2025,
-                Calendar.APRIL,
-                9,
-                0,
-                0,
-                0
-            )
-
-            marriedStart.set(
-                Calendar.MILLISECOND,
-                0
-            )
+                getDateFromSettings(
+                    "married_date",
+                    9,
+                    Calendar.APRIL,
+                    2025
+                )
 
             val married =
                 calculateDuration(
@@ -651,7 +900,7 @@ private var loadedBackgroundUri: String? = null
                         "${married.months} Months  •  " +
                         "${married.days} Days",
                 centerX,
-                970f,
+                990f,
                 30f,
                 Color.WHITE,
                 true
@@ -659,9 +908,12 @@ private var loadedBackgroundUri: String? = null
 
             drawText(
                 canvas,
-                "Since 09 April 2025",
+                "Since " +
+                        formatDisplayDate(
+                            marriedStart
+                        ),
                 centerX,
-                1015f,
+                1035f,
                 17f,
                 Color.rgb(
                     155,
@@ -674,7 +926,7 @@ private var loadedBackgroundUri: String? = null
             drawDivider(
                 canvas,
                 centerX,
-                1060f
+                1080f
             )
 
             // ========================================================
@@ -685,7 +937,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 married.totalDays.toString(),
                 centerX,
-                1125f,
+                1145f,
                 46f,
                 Color.WHITE,
                 true
@@ -695,7 +947,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 "TOTAL DAYS",
                 centerX,
-                1155f,
+                1175f,
                 13f,
                 Color.rgb(
                     130,
@@ -708,7 +960,7 @@ private var loadedBackgroundUri: String? = null
             drawTimeColumns(
                 canvas,
                 centerX,
-                1225f,
+                1245f,
                 married.hours,
                 married.minutes,
                 married.seconds
@@ -722,7 +974,7 @@ private var loadedBackgroundUri: String? = null
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1390f,
+                1410f,
                 21f,
                 Color.rgb(
                     255,
@@ -735,13 +987,93 @@ private var loadedBackgroundUri: String? = null
             drawGlowDot(
                 canvas,
                 centerX - 250f,
-                1390f
+                1410f
             )
 
             drawGlowDot(
                 canvas,
                 centerX + 250f,
-                1390f
+                1410f
+            )
+        }
+
+        // ============================================================
+        // DATE FROM SETTINGS
+        // ============================================================
+
+        private fun getDateFromSettings(
+            key: String,
+            defaultDay: Int,
+            defaultMonth: Int,
+            defaultYear: Int
+        ): Calendar {
+
+            val value =
+                prefs.getString(
+                    key,
+                    null
+                )
+
+            val calendar =
+                Calendar.getInstance()
+
+            calendar.set(
+                defaultYear,
+                defaultMonth,
+                defaultDay,
+                0,
+                0,
+                0
+            )
+
+            calendar.set(
+                Calendar.MILLISECOND,
+                0
+            )
+
+            if (value.isNullOrBlank()) {
+                return calendar
+            }
+
+            try {
+
+                val format =
+                    SimpleDateFormat(
+                        "dd-MM-yyyy",
+                        Locale.US
+                    )
+
+                format.isLenient = false
+
+                val date =
+                    format.parse(value)
+
+                if (date != null) {
+
+                    calendar.time =
+                        date
+                }
+
+            } catch (_: Exception) {
+                // Keep default date
+            }
+
+            return calendar
+        }
+
+        // ============================================================
+        // DISPLAY DATE
+        // ============================================================
+
+        private fun formatDisplayDate(
+            calendar: Calendar
+        ): String {
+
+            return SimpleDateFormat(
+                "dd MMMM yyyy",
+                Locale.getDefault()
+            ).format(
+                calendar.time
             )
         }
 
@@ -762,9 +1094,11 @@ private var loadedBackgroundUri: String? = null
             paint.style =
                 Paint.Style.FILL
 
-            paint.color = color
+            paint.color =
+                color
 
-            paint.textSize = size
+            paint.textSize =
+                size
 
             paint.textAlign =
                 Paint.Align.CENTER
@@ -794,7 +1128,8 @@ private var loadedBackgroundUri: String? = null
             paint.style =
                 Paint.Style.STROKE
 
-            paint.strokeWidth = 1.5f
+            paint.strokeWidth =
+                1.5f
 
             paint.color =
                 Color.rgb(
@@ -904,7 +1239,8 @@ private var loadedBackgroundUri: String? = null
             paint.style =
                 Paint.Style.STROKE
 
-            paint.strokeWidth = 1f
+            paint.strokeWidth =
+                1f
 
             paint.color =
                 Color.rgb(
@@ -931,7 +1267,7 @@ private var loadedBackgroundUri: String? = null
         }
 
         // ============================================================
-        // HEART
+        // GLOWING HEART
         // ============================================================
 
         private fun drawGlowingHeart(
@@ -986,6 +1322,10 @@ private var loadedBackgroundUri: String? = null
                 )
             )
         }
+
+        // ============================================================
+        // HEART SHAPE
+        // ============================================================
 
         private fun drawHeartShape(
             canvas: Canvas,
@@ -1042,7 +1382,7 @@ private var loadedBackgroundUri: String? = null
         }
 
         // ============================================================
-        // LARGE BACKGROUND HEART
+        // LARGE HEART
         // ============================================================
 
         private fun drawLargeHeart(
@@ -1114,7 +1454,8 @@ private var loadedBackgroundUri: String? = null
             paint.style =
                 Paint.Style.STROKE
 
-            paint.strokeWidth = 6f
+            paint.strokeWidth =
+                6f
 
             for (i in 1..5) {
 
@@ -1168,54 +1509,6 @@ private var loadedBackgroundUri: String? = null
             )
         }
 
-       // ============================================================
-        // LOAD BACKGROUND 
-        // ============================================================
-
-        
-        private fun loadBackgroundIfNeeded() {
-
-    val uriString = prefs.getString(
-        "background_uri",
-        null
-    )
-
-    if (uriString == loadedBackgroundUri) {
-        return
-    }
-
-    backgroundBitmap?.recycle()
-    backgroundBitmap = null
-
-    loadedBackgroundUri = uriString
-
-    if (uriString.isNullOrEmpty()) {
-        return
-    }
-
-    try {
-
-        val uri = Uri.parse(uriString)
-
-        val inputStream =
-            contentResolver.openInputStream(uri)
-
-        if (inputStream != null) {
-
-            backgroundBitmap =
-                BitmapFactory.decodeStream(
-                    inputStream
-                )
-
-            inputStream.close()
-        }
-
-    } catch (_: Exception) {
-
-        backgroundBitmap = null
-    }
-}
-
         // ============================================================
         // GLOW DOT
         // ============================================================
@@ -1263,7 +1556,6 @@ private var loadedBackgroundUri: String? = null
 
 // ====================================================================
 // DURATION RESULT
-// IMPORTANT: This is OUTSIDE RelationshipEngine.
 // ====================================================================
 
 private data class DurationResult(
