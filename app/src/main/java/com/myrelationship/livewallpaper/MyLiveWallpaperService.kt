@@ -984,3 +984,4 @@ private fun calculateDuration(
         )
       }
     }
+}
