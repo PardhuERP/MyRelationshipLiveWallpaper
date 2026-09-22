@@ -160,35 +160,34 @@ class MainActivity : Activity() {
 
         addSpace(root, 25)
 
+        // --------------------------------------------------------
+        // BACKGROUND IMAGE
+        // --------------------------------------------------------
 
-// --------------------------------------------------------
-// BACKGROUND IMAGE
-// --------------------------------------------------------
+        imageText = TextView(this)
 
-imageText = TextView(this)
+        imageText.textSize = 18f
+        imageText.gravity = Gravity.CENTER
 
-imageText.textSize = 18f
-imageText.gravity = Gravity.CENTER
+        updateImageText()
 
-updateImageText()
+        root.addView(
+            imageText,
+            LinearLayout.LayoutParams(
+                -1,
+                -2
+            )
+        )
 
-root.addView(
-    imageText,
-    LinearLayout.LayoutParams(
-        -1,
-        -2
-    )
-)
+        val imageButton = Button(this)
 
-val imageButton = Button(this)
+        imageButton.text = "Choose Background Image 🖼️"
 
-imageButton.text = "Choose Background Image 🖼️"
+        imageButton.setOnClickListener {
+            chooseBackgroundImage()
+        }
 
-imageButton.setOnClickListener {
-    chooseBackgroundImage()
-}
-
-root.addView(
+       root.addView(
     imageButton,
     LinearLayout.LayoutParams(
         -1,
@@ -197,7 +196,7 @@ root.addView(
 )
 
 // --------------------------------------------------------
-// DEFAULT BACKGROUND
+// USE DEFAULT BACKGROUND
 // --------------------------------------------------------
 
 val defaultBackgroundButton = Button(this)
@@ -207,12 +206,8 @@ defaultBackgroundButton.text =
 
 defaultBackgroundButton.setOnClickListener {
 
-    getSharedPreferences(
-        "relationship_settings",
-        MODE_PRIVATE
-    )
-        .edit()
-        .remove("background_uri")
+    prefs.edit()
+        .remove(KEY_BACKGROUND_URI)
         .apply()
 
     updateImageText()
@@ -226,31 +221,30 @@ root.addView(
     )
 )
 
-addSpace(root, 40)
+addSpace(root, 40) 
 
-// --------------------------------------------------------
-// SET WALLPAPER
-// --------------------------------------------------------
+        // --------------------------------------------------------
+        // SET WALLPAPER
+        // --------------------------------------------------------
 
-val wallpaperButton = Button(this)
+        val wallpaperButton = Button(this)
 
-wallpaperButton.text =
-    "Set Live Wallpaper ❤️"
+        wallpaperButton.text = "Set Live Wallpaper ❤️"
 
-wallpaperButton.setOnClickListener {
-    openWallpaperPicker()
-}
+        wallpaperButton.setOnClickListener {
+            openWallpaperPicker()
+        }
 
-root.addView(
-    wallpaperButton,
-    LinearLayout.LayoutParams(
-        -1,
-        -2
-    )
-)
+        root.addView(
+            wallpaperButton,
+            LinearLayout.LayoutParams(
+                -1,
+                -2
+            )
+        )
 
-setContentView(root)
-
+        setContentView(root)
+    }
 
     // ============================================================
     // DATE PICKER
