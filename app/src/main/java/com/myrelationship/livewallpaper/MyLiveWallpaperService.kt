@@ -1260,7 +1260,7 @@ if (isAnniversaryToday(anniversary)) {
 
             drawText(
                 canvas,
-                "Look down to unlock",
+                "Hear beat...",
                 centerX,
                 170f,
                 18f,
