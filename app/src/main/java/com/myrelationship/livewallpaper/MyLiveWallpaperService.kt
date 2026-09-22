@@ -1449,7 +1449,7 @@ drawText(
     canvas,
     "♥  NEXT ANNIVERSARY  ♥",
     centerX,
-    1335f,
+    1300f,
     23f,
     Color.rgb(
         255,
@@ -1465,7 +1465,7 @@ drawText(
         nextAnniversary
     ),
     centerX,
-    1375f,
+    1340f,
     24f,
     Color.WHITE,
     true
@@ -1477,7 +1477,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
         canvas,
         "$daysUntilAnniversary DAYS TO GO",
         centerX,
-        1410f,
+        1375f,
         14f,
         Color.rgb(
             155,
