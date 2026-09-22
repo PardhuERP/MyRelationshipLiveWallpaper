@@ -16,101 +16,8 @@ import kotlin.math.sin
 
 class MyLiveWallpaperService : WallpaperService() {
 
-    override fun onCreateEngine(): Engine {
+    override fun onCreateEngine(): WallpaperService.Engine {
         return RelationshipEngine()
-    }
-
-    private data class DurationResult(
-        val years: Int,
-        val months: Int,
-        val days: Int,
-        val hours: Int,
-        val minutes: Int,
-        val seconds: Int,
-        val totalDays: Long
-    )
-
-    private fun calculateDuration(
-        start: Calendar,
-        end: Calendar
-    ): DurationResult {
-
-        val cursor = Calendar.getInstance()
-        cursor.timeInMillis = start.timeInMillis
-
-        var years = 0
-        var months = 0
-        var days = 0
-
-        // YEARS
-        while (true) {
-            val next = Calendar.getInstance()
-            next.timeInMillis = cursor.timeInMillis
-            next.add(Calendar.YEAR, 1)
-
-            if (next.timeInMillis <= end.timeInMillis) {
-                cursor.timeInMillis = next.timeInMillis
-                years++
-            } else {
-                break
-            }
-        }
-
-        // MONTHS
-        while (true) {
-            val next = Calendar.getInstance()
-            next.timeInMillis = cursor.timeInMillis
-            next.add(Calendar.MONTH, 1)
-
-            if (next.timeInMillis <= end.timeInMillis) {
-                cursor.timeInMillis = next.timeInMillis
-                months++
-            } else {
-                break
-            }
-        }
-
-        // DAYS
-        while (true) {
-            val next = Calendar.getInstance()
-            next.timeInMillis = cursor.timeInMillis
-            next.add(Calendar.DAY_OF_MONTH, 1)
-
-            if (next.timeInMillis <= end.timeInMillis) {
-                cursor.timeInMillis = next.timeInMillis
-                days++
-            } else {
-                break
-            }
-        }
-
-        val remaining =
-            end.timeInMillis - cursor.timeInMillis
-
-        val totalSeconds =
-            remaining / 1000L
-
-        val hours =
-            (totalSeconds / 3600L).toInt()
-
-        val minutes =
-            ((totalSeconds % 3600L) / 60L).toInt()
-
-        val seconds =
-            (totalSeconds % 60L).toInt()
-
-        val totalDays =
-            (end.timeInMillis - start.timeInMillis) / 86400000L
-
-        return DurationResult(
-            years = years,
-            months = months,
-            days = days,
-            hours = hours,
-            minutes = minutes,
-            seconds = seconds,
-            totalDays = totalDays
-        )
     }
 
     inner class RelationshipEngine : Engine() {
@@ -118,17 +25,16 @@ class MyLiveWallpaperService : WallpaperService() {
         private var running = false
         private var drawingThread: Thread? = null
 
-        private val paint =
-            Paint(Paint.ANTI_ALIAS_FLAG)
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val path = Path()
 
-        private val path =
-            Path()
+        private var animationTime = System.currentTimeMillis()
 
-        private var animationTime = 0L
+        // ---------------------------------------------------------
+        // VISIBILITY
+        // ---------------------------------------------------------
 
-        override fun onVisibilityChanged(
-            isVisible: Boolean
-        ) {
+        override fun onVisibilityChanged(isVisible: Boolean) {
             super.onVisibilityChanged(isVisible)
 
             if (isVisible) {
@@ -144,24 +50,21 @@ class MyLiveWallpaperService : WallpaperService() {
             width: Int,
             height: Int
         ) {
-            super.onSurfaceChanged(
-                holder,
-                format,
-                width,
-                height
-            )
+            super.onSurfaceChanged(holder, format, width, height)
 
             if (!running) {
                 startAnimation()
             }
         }
 
-        override fun onSurfaceDestroyed(
-            holder: SurfaceHolder
-        ) {
+        override fun onSurfaceDestroyed(holder: SurfaceHolder) {
             stopAnimation()
             super.onSurfaceDestroyed(holder)
         }
+
+        // ---------------------------------------------------------
+        // ANIMATION
+        // ---------------------------------------------------------
 
         private fun startAnimation() {
 
@@ -173,8 +76,7 @@ class MyLiveWallpaperService : WallpaperService() {
 
                 while (running) {
 
-                    animationTime =
-                        System.currentTimeMillis()
+                    animationTime = System.currentTimeMillis()
 
                     drawWallpaper()
 
@@ -194,48 +96,73 @@ class MyLiveWallpaperService : WallpaperService() {
             running = false
 
             drawingThread?.interrupt()
-
             drawingThread = null
         }
 
+        // ---------------------------------------------------------
+        // MAIN DRAWING
+        // ---------------------------------------------------------
+
         private fun drawWallpaper() {
-    val holder = surfaceHolder
-    var canvas: Canvas? = null
 
-    try {
-        canvas = holder.lockCanvas()
-        if (canvas == null) return
+            val holder = surfaceHolder
+            var canvas: Canvas? = null
 
-        // Direct screen dimensions
-        val screenWidth = canvas.width.toFloat()
-        val screenHeight = canvas.height.toFloat()
+            try {
 
-        canvas.drawColor(Color.rgb(4, 7, 13))
+                canvas = holder.lockCanvas()
 
-        // Target Design Aspect Ratio
-        val targetWidth = 1080f
-        val targetHeight = 2400f
+                if (canvas == null) return
 
-        // Calculate scaling factors for full screen coverage
-        val scaleX = screenWidth / targetWidth
-        val scaleY = screenHeight / targetHeight
+                val screenWidth = canvas.width.toFloat()
+                val screenHeight = canvas.height.toFloat()
 
-        canvas.save()
-        // Uniform scaling target base content size
-        canvas.scale(scaleX, scaleY)
+                // Background
+                canvas.drawColor(
+                    Color.rgb(4, 7, 13)
+                )
 
-        drawBackgroundEffects(canvas, targetWidth, targetHeight)
-        drawMainContent(canvas, targetWidth, targetHeight)
+                // Our fixed design size
+                val targetWidth = 1080f
+                val targetHeight = 2400f
 
-        canvas.restore()
+                // Full screen scaling
+                val scaleX =
+                    screenWidth / targetWidth
 
-    } finally {
-        if (canvas != null) {
-            holder.unlockCanvasAndPost(canvas)
+                val scaleY =
+                    screenHeight / targetHeight
+
+                canvas.save()
+
+                canvas.scale(
+                    scaleX,
+                    scaleY
+                )
+
+                // Background first
+                drawBackgroundEffects(
+                    canvas,
+                    targetWidth,
+                    targetHeight
+                )
+
+                // Main relationship information
+                drawMainContent(
+                    canvas,
+                    targetWidth,
+                    targetHeight
+                )
+
+                canvas.restore()
+
+            } finally {
+
+                if (canvas != null) {
+                    holder.unlockCanvasAndPost(canvas)
+                }
+            }
         }
-    }
-}
-
 
         // =========================================================
         // BACKGROUND
@@ -250,174 +177,137 @@ class MyLiveWallpaperService : WallpaperService() {
             val t =
                 animationTime / 1000.0
 
-            /*
-             * Large soft glow
-             */
+            // -----------------------------------------------------
+            // VERY SOFT RED GLOW AREAS
+            // -----------------------------------------------------
 
-            paint.style =
-                Paint.Style.FILL
-
-            paint.color =
-                Color.argb(
-                    18,
-                    255,
-                    20,
-                    70
-                )
-
-            canvas.drawCircle(
-                width * 0.15f,
-                height * 0.25f,
+            drawSoftGlow(
+                canvas,
+                100f,
+                650f,
                 260f,
-                paint
+                Color.rgb(150, 0, 45)
             )
 
+            drawSoftGlow(
+                canvas,
+                950f,
+                1500f,
+                300f,
+                Color.rgb(150, 0, 45)
+            )
+
+            drawSoftGlow(
+                canvas,
+                150f,
+                2150f,
+                240f,
+                Color.rgb(100, 0, 40)
+            )
+
+            // -----------------------------------------------------
+            // LARGE HEARTS
+            // -----------------------------------------------------
+
+            drawBackgroundHeart(
+                canvas,
+                85f,
+                380f,
+                95f,
+                35,
+                0.0
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                1000f,
+                470f,
+                70f,
+                30,
+                1.2
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                75f,
+                850f,
+                75f,
+                30,
+                2.4
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                980f,
+                900f,
+                100f,
+                32,
+                3.0
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                90f,
+                1250f,
+                70f,
+                28,
+                1.8
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                990f,
+                1370f,
+                90f,
+                32,
+                2.8
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                110f,
+                1660f,
+                85f,
+                28,
+                0.8
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                950f,
+                1830f,
+                115f,
+                30,
+                2.1
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                150f,
+                2110f,
+                95f,
+                25,
+                3.2
+            )
+
+            drawBackgroundHeart(
+                canvas,
+                850f,
+                2220f,
+                65f,
+                28,
+                1.5
+            )
+
+            // -----------------------------------------------------
+            // CURVED HEART TRAIL - LEFT
+            // -----------------------------------------------------
+
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 2.0f
             paint.color =
                 Color.argb(
-                    15,
-                    255,
-                    30,
-                    80
-                )
-
-            canvas.drawCircle(
-                width * 0.88f,
-                height * 0.72f,
-                320f,
-                paint
-            )
-
-            /*
-             * Floating hearts
-             */
-
-            val hearts =
-                arrayOf(
-                    floatArrayOf(90f, 300f, 30f),
-                    floatArrayOf(960f, 420f, 24f),
-                    floatArrayOf(120f, 820f, 48f),
-                    floatArrayOf(950f, 930f, 36f),
-                    floatArrayOf(80f, 1280f, 30f),
-                    floatArrayOf(990f, 1430f, 50f),
-                    floatArrayOf(150f, 1700f, 40f),
-                    floatArrayOf(900f, 1900f, 32f),
-                    floatArrayOf(100f, 2150f, 24f),
-                    floatArrayOf(960f, 2250f, 42f)
-                )
-
-            for (i in hearts.indices) {
-
-                val heart =
-                    hearts[i]
-
-                val move =
-                    sin(
-                        t * 0.45 +
-                                i * 0.8
-                    ) * 12.0
-
-                val alpha =
-                    20 + (i % 3) * 8
-
-                drawHeartShape(
-                    canvas,
-                    heart[0],
-                    heart[1] + move.toFloat(),
-                    heart[2],
-                    Color.argb(
-                        alpha,
-                        255,
-                        35,
-                        85
-                    )
-                )
-            }
-
-            /*
-             * Glowing curved lines
-             */
-
-            drawHeartCurve(
-                canvas,
-                width,
-                height,
-                true,
-                t
-            )
-
-            drawHeartCurve(
-                canvas,
-                width,
-                height,
-                false,
-                t
-            )
-
-            /*
-             * Tiny particles
-             */
-
-            paint.style =
-                Paint.Style.FILL
-
-            for (i in 0 until 70) {
-
-                val x =
-                    ((i * 157) %
-                            width.toInt())
-                        .toFloat()
-
-                val movement =
-                    (
-                        t *
-                                (5 + i % 6)
-                        ) %
-                        height.toDouble()
-
-                val y =
-                    (
-                        height -
-                                movement +
-                                i * 47
-                        ) % height
-
-                val alpha =
-                    25 + (i % 4) * 12
-
-                paint.color =
-                    Color.argb(
-                        alpha,
-                        255,
-                        55,
-                        100
-                    )
-
-                canvas.drawCircle(
-                    x,
-                    y.toFloat(),
-                    if (i % 7 == 0) 2.5f else 1.2f,
-                    paint
-                )
-            }
-        }
-
-        private fun drawHeartCurve(
-            canvas: Canvas,
-            width: Float,
-            height: Float,
-            left: Boolean,
-            time: Double
-        ) {
-
-            paint.style =
-                Paint.Style.STROKE
-
-            paint.strokeWidth =
-                2.2f
-
-            paint.color =
-                Color.argb(
-                    75,
+                    125,
                     255,
                     35,
                     90
@@ -425,70 +315,318 @@ class MyLiveWallpaperService : WallpaperService() {
 
             path.reset()
 
-            if (left) {
+            path.moveTo(
+                -80f,
+                430f
+            )
 
-                path.moveTo(
-                    -100f,
-                    height * 0.35f
+            for (i in 0..220) {
+
+                val x =
+                    -80f + i * 5.8f
+
+                val wave =
+                    sin(
+                        i * 0.035 +
+                                t * 0.35
+                    ) * 55.0
+
+                val y =
+                    450f +
+                            i * 4.1f +
+                            wave
+
+                path.lineTo(
+                    x,
+                    y.toFloat()
                 )
-
-                for (i in 0..260) {
-
-                    val x =
-                        -100f + i * 5.2f
-
-                    val wave =
-                        sin(
-                            i * 0.035 +
-                                    time * 0.35
-                        ) * 45.0
-
-                    val y =
-                        height * 0.35f +
-                                i * 3.8f +
-                                wave
-
-                    path.lineTo(
-                        x,
-                        y.toFloat()
-                    )
-                }
-
-            } else {
-
-                path.moveTo(
-                    width + 100f,
-                    height * 0.48f
-                )
-
-                for (i in 0..260) {
-
-                    val x =
-                        width +
-                                100f -
-                                i * 5.2f
-
-                    val wave =
-                        cos(
-                            i * 0.035 +
-                                    time * 0.30
-                        ) * 45.0
-
-                    val y =
-                        height * 0.48f +
-                                i * 3.8f +
-                                wave
-
-                    path.lineTo(
-                        x,
-                        y.toFloat()
-                    )
-                }
             }
 
             canvas.drawPath(
                 path,
                 paint
+            )
+
+            // -----------------------------------------------------
+            // CURVED HEART TRAIL - RIGHT
+            // -----------------------------------------------------
+
+            paint.color =
+                Color.argb(
+                    105,
+                    255,
+                    35,
+                    90
+                )
+
+            path.reset()
+
+            path.moveTo(
+                width + 80f,
+                600f
+            )
+
+            for (i in 0..230) {
+
+                val x =
+                    width + 80f -
+                            i * 5.6f
+
+                val wave =
+                    cos(
+                        i * 0.04 +
+                                t * 0.30
+                    ) * 60.0
+
+                val y =
+                    620f +
+                            i * 4.2f +
+                            wave
+
+                path.lineTo(
+                    x,
+                    y.toFloat()
+                )
+            }
+
+            canvas.drawPath(
+                path,
+                paint
+            )
+
+            // -----------------------------------------------------
+            // BOTTOM CURVE
+            // -----------------------------------------------------
+
+            paint.color =
+                Color.argb(
+                    80,
+                    255,
+                    30,
+                    80
+                )
+
+            path.reset()
+
+            path.moveTo(
+                -100f,
+                1850f
+            )
+
+            for (i in 0..250) {
+
+                val x =
+                    -100f + i * 5.2f
+
+                val wave =
+                    sin(
+                        i * 0.035 +
+                                t * 0.25
+                    ) * 90.0
+
+                val y =
+                    1900f +
+                            i * 1.5f +
+                            wave
+
+                path.lineTo(
+                    x,
+                    y.toFloat()
+                )
+            }
+
+            canvas.drawPath(
+                path,
+                paint
+            )
+
+            // -----------------------------------------------------
+            // FLOATING PARTICLES
+            // -----------------------------------------------------
+
+            paint.style = Paint.Style.FILL
+
+            for (i in 0 until 75) {
+
+                val x =
+                    ((i * 149) % width.toInt())
+                        .toFloat()
+
+                val speed =
+                    4 + (i % 7)
+
+                val movement =
+                    (
+                            t * speed +
+                                    i * 97
+                            ) % height.toDouble()
+
+                val y =
+                    (
+                            height -
+                                    movement
+                            ).toFloat()
+
+                val alpha =
+                    30 + (i % 5) * 12
+
+                val radius =
+                    if (i % 9 == 0) {
+                        2.8f
+                    } else {
+                        1.2f
+                    }
+
+                paint.color =
+                    Color.argb(
+                        alpha,
+                        255,
+                        40,
+                        100
+                    )
+
+                canvas.drawCircle(
+                    x,
+                    y,
+                    radius,
+                    paint
+                )
+            }
+
+            // -----------------------------------------------------
+            // RANDOM SMALL HEARTS
+            // -----------------------------------------------------
+
+            for (i in 0 until 14) {
+
+                val x =
+                    ((i * 83 + 40) %
+                            width.toInt())
+                        .toFloat()
+
+                val baseY =
+                    ((i * 173 + 120) %
+                            height.toInt())
+                        .toFloat()
+
+                val movement =
+                    (
+                            sin(
+                                t * 0.25 +
+                                        i
+                            ) * 30.0
+                            ).toFloat()
+
+                drawTinyHeart(
+                    canvas,
+                    x,
+                    baseY + movement,
+                    9f + (i % 4) * 2f,
+                    80
+                )
+            }
+        }
+
+        // =========================================================
+        // SOFT GLOW
+        // =========================================================
+
+        private fun drawSoftGlow(
+            canvas: Canvas,
+            x: Float,
+            y: Float,
+            radius: Float,
+            color: Int
+        ) {
+
+            paint.style = Paint.Style.FILL
+
+            for (i in 6 downTo 1) {
+
+                val r =
+                    radius *
+                            i /
+                            6f
+
+                val alpha =
+                    5 + i * 3
+
+                paint.color =
+                    Color.argb(
+                        alpha,
+                        Color.red(color),
+                        Color.green(color),
+                        Color.blue(color)
+                    )
+
+                canvas.drawCircle(
+                    x,
+                    y,
+                    r,
+                    paint
+                )
+            }
+        }
+
+        // =========================================================
+        // BACKGROUND HEART
+        // =========================================================
+
+        private fun drawBackgroundHeart(
+            canvas: Canvas,
+            x: Float,
+            y: Float,
+            size: Float,
+            alpha: Int,
+            phase: Double
+        ) {
+
+            val t =
+                animationTime / 1000.0
+
+            val pulse =
+                1.0 +
+                        sin(
+                            t * 0.45 +
+                                    phase
+                        ) * 0.04
+
+            val finalSize =
+                size *
+                        pulse.toFloat()
+
+            // Glow
+            for (i in 4 downTo 1) {
+
+                val glowAlpha =
+                    alpha / (i + 1)
+
+                drawHeartShape(
+                    canvas,
+                    x,
+                    y,
+                    finalSize +
+                            i * 8f,
+                    Color.argb(
+                        glowAlpha,
+                        255,
+                        25,
+                        75
+                    )
+                )
+            }
+
+            drawHeartShape(
+                canvas,
+                x,
+                y,
+                finalSize,
+                Color.argb(
+                    alpha,
+                    150,
+                    15,
+                    55
+                )
             )
         }
 
@@ -505,64 +643,66 @@ class MyLiveWallpaperService : WallpaperService() {
             val centerX =
                 width / 2f
 
-            /*
-             * TOP HEART
-             */
+            // -----------------------------------------------------
+            // TOP HEART
+            // -----------------------------------------------------
 
             drawGlowingHeart(
                 canvas,
                 centerX,
-                115f
+                125f
             )
 
             drawText(
                 canvas,
                 "Look down to unlock",
                 centerX,
-                185f,
-                24f,
+                190f,
+                19f,
                 Color.rgb(
-                    165,
-                    165,
-                    175
+                    155,
+                    158,
+                    168
                 ),
                 false
             )
 
-            /*
-             * CLOCK
-             */
+            // -----------------------------------------------------
+            // CLOCK
+            // -----------------------------------------------------
 
             val time =
                 SimpleDateFormat(
                     "HH:mm:ss",
                     Locale.getDefault()
-                ).format(Date())
+                ).format(
+                    Date()
+                )
 
             drawText(
                 canvas,
                 time,
                 centerX,
-                275f,
+                285f,
                 64f,
                 Color.WHITE,
                 true
             )
 
-            /*
-             * TOGETHER
-             */
+            // -----------------------------------------------------
+            // TOGETHER
+            // -----------------------------------------------------
 
             drawText(
                 canvas,
                 "♥  TOGETHER FOR  ♥",
                 centerX,
                 375f,
-                29f,
+                27f,
                 Color.rgb(
                     255,
-                    70,
-                    105
+                    55,
+                    95
                 ),
                 true
             )
@@ -600,7 +740,7 @@ class MyLiveWallpaperService : WallpaperService() {
                         "${together.days} Days",
                 centerX,
                 445f,
-                38f,
+                34f,
                 Color.WHITE,
                 true
             )
@@ -609,31 +749,35 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas,
                 "Since 14 February 2006",
                 centerX,
-                495f,
-                21f,
+                490f,
+                18f,
                 Color.rgb(
-                    160,
-                    160,
-                    170
+                    155,
+                    158,
+                    168
                 ),
                 false
             )
 
-            drawDivider(
+            // -----------------------------------------------------
+            // DIVIDER
+            // -----------------------------------------------------
+
+            drawDividerWithHeart(
                 canvas,
                 centerX,
                 545f
             )
 
-            /*
-             * TOTAL TOGETHER DAYS
-             */
+            // -----------------------------------------------------
+            // TOTAL DAYS
+            // -----------------------------------------------------
 
             drawText(
                 canvas,
                 together.totalDays.toString(),
                 centerX,
-                625f,
+                615f,
                 48f,
                 Color.WHITE,
                 true
@@ -641,14 +785,14 @@ class MyLiveWallpaperService : WallpaperService() {
 
             drawText(
                 canvas,
-                "TOTAL DAYS",
+                "T O T A L   D A Y S",
                 centerX,
-                660f,
-                15f,
+                650f,
+                13f,
                 Color.rgb(
-                    140,
-                    140,
-                    150
+                    145,
+                    148,
+                    158
                 ),
                 false
             )
@@ -662,30 +806,30 @@ class MyLiveWallpaperService : WallpaperService() {
                 together.seconds
             )
 
-            /*
-             * WEDDING RINGS
-             */
+            // -----------------------------------------------------
+            // WEDDING RINGS
+            // -----------------------------------------------------
 
             drawWeddingRings(
                 canvas,
                 centerX,
-                870f
+                900f
             )
 
-            /*
-             * MARRIED
-             */
+            // -----------------------------------------------------
+            // MARRIED
+            // -----------------------------------------------------
 
             drawText(
                 canvas,
                 "♥  MARRIED FOR  ♥",
                 centerX,
-                990f,
-                29f,
+                1015f,
+                27f,
                 Color.rgb(
                     255,
-                    70,
-                    105
+                    55,
+                    95
                 ),
                 true
             )
@@ -719,8 +863,8 @@ class MyLiveWallpaperService : WallpaperService() {
                         "${married.months} Months  •  " +
                         "${married.days} Days",
                 centerX,
-                1060f,
-                38f,
+                1085f,
+                34f,
                 Color.WHITE,
                 true
             )
@@ -729,31 +873,35 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas,
                 "Since 09 April 2025",
                 centerX,
-                1110f,
-                21f,
+                1130f,
+                18f,
                 Color.rgb(
-                    160,
-                    160,
-                    170
+                    155,
+                    158,
+                    168
                 ),
                 false
             )
 
-            drawDivider(
+            // -----------------------------------------------------
+            // DIVIDER
+            // -----------------------------------------------------
+
+            drawDividerWithHeart(
                 canvas,
                 centerX,
-                1160f
+                1185f
             )
 
-            /*
-             * MARRIED TOTAL DAYS
-             */
+            // -----------------------------------------------------
+            // MARRIED TOTAL DAYS
+            // -----------------------------------------------------
 
             drawText(
                 canvas,
                 married.totalDays.toString(),
                 centerX,
-                1240f,
+                1255f,
                 48f,
                 Color.WHITE,
                 true
@@ -761,14 +909,14 @@ class MyLiveWallpaperService : WallpaperService() {
 
             drawText(
                 canvas,
-                "TOTAL DAYS",
+                "T O T A L   D A Y S",
                 centerX,
-                1275f,
-                15f,
+                1290f,
+                13f,
                 Color.rgb(
-                    140,
-                    140,
-                    150
+                    145,
+                    148,
+                    158
                 ),
                 false
             )
@@ -776,40 +924,105 @@ class MyLiveWallpaperService : WallpaperService() {
             drawTimeColumns(
                 canvas,
                 centerX,
-                1350f,
+                1375f,
                 married.hours,
                 married.minutes,
                 married.seconds
             )
 
-            /*
-             * BOTTOM MESSAGE
-             */
+            // -----------------------------------------------------
+            // FINAL MESSAGE
+            // -----------------------------------------------------
 
             drawText(
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1490f,
-                25f,
+                1515f,
+                23f,
                 Color.rgb(
                     255,
-                    70,
-                    105
+                    55,
+                    95
                 ),
                 true
             )
 
             drawGlowDot(
                 canvas,
-                centerX - 330f,
-                1490f
+                centerX - 300f,
+                1515f
             )
 
             drawGlowDot(
                 canvas,
-                centerX + 330f,
-                1490f
+                centerX + 300f,
+                1515f
+            )
+
+            // -----------------------------------------------------
+            // EXTRA DECORATION IN LOWER SCREEN
+            // -----------------------------------------------------
+
+            drawTinyHeart(
+                canvas,
+                180f,
+                1660f,
+                18f,
+                120
+            )
+
+            drawTinyHeart(
+                canvas,
+                900f,
+                1700f,
+                25f,
+                100
+            )
+
+            drawTinyHeart(
+                canvas,
+                300f,
+                1840f,
+                14f,
+                90
+            )
+
+            drawTinyHeart(
+                canvas,
+                780f,
+                1930f,
+                18f,
+                100
+            )
+
+            drawTinyHeart(
+                canvas,
+                150f,
+                2100f,
+                23f,
+                90
+            )
+
+            drawTinyHeart(
+                canvas,
+                920f,
+                2180f,
+                16f,
+                90
+            )
+
+            // Decorative bottom glow
+            drawSoftGlow(
+                canvas,
+                centerX,
+                2250f,
+                260f,
+                Color.rgb(
+                    80,
+                    0,
+                    35
+                )
             )
         }
 
@@ -852,10 +1065,10 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // =========================================================
-        // DIVIDER
+        // DIVIDER WITH HEART
         // =========================================================
 
-        private fun drawDivider(
+        private fun drawDividerWithHeart(
             canvas: Canvas,
             centerX: Float,
             y: Float
@@ -865,28 +1078,28 @@ class MyLiveWallpaperService : WallpaperService() {
                 Paint.Style.STROKE
 
             paint.strokeWidth =
-                2f
+                1.5f
 
             paint.color =
                 Color.argb(
-                    100,
+                    150,
                     255,
-                    55,
-                    95
+                    45,
+                    90
                 )
 
             canvas.drawLine(
-                centerX - 430f,
+                centerX - 460f,
                 y,
-                centerX - 40f,
+                centerX - 35f,
                 y,
                 paint
             )
 
             canvas.drawLine(
-                centerX + 40f,
+                centerX + 35f,
                 y,
-                centerX + 430f,
+                centerX + 460f,
                 y,
                 paint
             )
@@ -895,7 +1108,7 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas,
                 centerX,
                 y - 2f,
-                10f,
+                11f,
                 Color.WHITE
             )
         }
@@ -915,9 +1128,9 @@ class MyLiveWallpaperService : WallpaperService() {
 
             val positions =
                 floatArrayOf(
-                    centerX - 270f,
+                    centerX - 280f,
                     centerX,
-                    centerX + 270f
+                    centerX + 280f
                 )
 
             val values =
@@ -953,7 +1166,7 @@ class MyLiveWallpaperService : WallpaperService() {
                     values[i],
                     positions[i],
                     y,
-                    38f,
+                    36f,
                     Color.WHITE,
                     true
                 )
@@ -962,12 +1175,12 @@ class MyLiveWallpaperService : WallpaperService() {
                     canvas,
                     labels[i],
                     positions[i],
-                    y + 38f,
-                    14f,
+                    y + 40f,
+                    12f,
                     Color.rgb(
-                        140,
-                        140,
-                        150
+                        125,
+                        128,
+                        138
                     ),
                     false
                 )
@@ -977,34 +1190,35 @@ class MyLiveWallpaperService : WallpaperService() {
                 Paint.Style.STROKE
 
             paint.strokeWidth =
-                2f
+                1.5f
 
             paint.color =
-                Color.rgb(
-                    65,
-                    65,
-                    75
+                Color.argb(
+                    100,
+                    150,
+                    150,
+                    160
                 )
 
             canvas.drawLine(
-                centerX - 135f,
-                y - 15f,
-                centerX - 135f,
-                y + 32f,
+                centerX - 140f,
+                y - 20f,
+                centerX - 140f,
+                y + 35f,
                 paint
             )
 
             canvas.drawLine(
-                centerX + 135f,
-                y - 15f,
-                centerX + 135f,
-                y + 32f,
+                centerX + 140f,
+                y - 20f,
+                centerX + 140f,
+                y + 35f,
                 paint
             )
         }
 
         // =========================================================
-        // GLOWING HEART
+        // TOP GLOWING HEART
         // =========================================================
 
         private fun drawGlowingHeart(
@@ -1017,28 +1231,27 @@ class MyLiveWallpaperService : WallpaperService() {
                 1f +
                         sin(
                             animationTime / 180.0
-                        ).toFloat() *
-                        0.08f
+                        ).toFloat() * 0.08f
 
-            paint.style =
-                Paint.Style.FILL
+            val size =
+                42f * pulse
 
-            for (i in 8 downTo 1) {
+            for (i in 7 downTo 1) {
 
                 paint.color =
                     Color.argb(
-                        12 * i,
+                        14 * i,
                         255,
                         20,
-                        70
+                        75
                     )
 
-                canvas.drawCircle(
+                drawHeartShape(
+                    canvas,
                     x,
                     y,
-                    48f * pulse +
-                            i * 12f,
-                    paint
+                    size + i * 7f,
+                    paint.color
                 )
             }
 
@@ -1046,11 +1259,24 @@ class MyLiveWallpaperService : WallpaperService() {
                 canvas,
                 x,
                 y,
-                43f * pulse,
+                size,
                 Color.rgb(
                     255,
-                    55,
-                    95
+                    40,
+                    85
+                )
+            )
+
+            // Inner highlight
+            drawHeartShape(
+                canvas,
+                x - 3f,
+                y - 3f,
+                size * 0.72f,
+                Color.rgb(
+                    255,
+                    65,
+                    105
                 )
             )
         }
@@ -1077,8 +1303,8 @@ class MyLiveWallpaperService : WallpaperService() {
             path.cubicTo(
                 cx - size * 1.7f,
                 cy - size * 0.1f,
-                cx - size * 1.2f,
-                cy - size * 1.4f,
+                cx - size * 1.25f,
+                cy - size * 1.45f,
                 cx - size * 0.45f,
                 cy - size * 0.95f
             )
@@ -1093,8 +1319,8 @@ class MyLiveWallpaperService : WallpaperService() {
             )
 
             path.cubicTo(
-                cx + size * 1.2f,
-                cy - size * 1.4f,
+                cx + size * 1.25f,
+                cy - size * 1.45f,
                 cx + size * 1.7f,
                 cy - size * 0.1f,
                 cx,
@@ -1114,6 +1340,32 @@ class MyLiveWallpaperService : WallpaperService() {
         }
 
         // =========================================================
+        // TINY HEART
+        // =========================================================
+
+        private fun drawTinyHeart(
+            canvas: Canvas,
+            x: Float,
+            y: Float,
+            size: Float,
+            alpha: Int
+        ) {
+
+            drawHeartShape(
+                canvas,
+                x,
+                y,
+                size,
+                Color.argb(
+                    alpha,
+                    255,
+                    40,
+                    90
+                )
+            )
+        }
+
+        // =========================================================
         // WEDDING RINGS
         // =========================================================
 
@@ -1129,44 +1381,47 @@ class MyLiveWallpaperService : WallpaperService() {
                 ).toFloat()
 
             val glow =
-                32f + pulse * 5f
+                34f +
+                        pulse * 5f
 
+            // Golden glow
             paint.style =
                 Paint.Style.STROKE
 
             paint.strokeWidth =
                 5f
 
-            for (i in 1..5) {
+            for (i in 4 downTo 1) {
 
                 paint.color =
                     Color.argb(
-                        18,
+                        18 * i,
                         255,
-                        190,
-                        60
+                        185,
+                        45
                     )
 
                 canvas.drawCircle(
-                    centerX - 30f,
+                    centerX - 32f,
                     centerY,
                     glow + i * 5f,
                     paint
                 )
 
                 canvas.drawCircle(
-                    centerX + 30f,
+                    centerX + 32f,
                     centerY,
                     glow + i * 5f,
                     paint
                 )
             }
 
+            // Rings
             paint.color =
                 Color.rgb(
                     255,
-                    195,
-                    65
+                    194,
+                    60
                 )
 
             paint.strokeWidth =
@@ -1186,21 +1441,22 @@ class MyLiveWallpaperService : WallpaperService() {
                 paint
             )
 
+            // Small heart above
             drawHeartShape(
                 canvas,
                 centerX,
-                centerY - 68f,
-                11f,
+                centerY - 65f,
+                10f,
                 Color.rgb(
                     255,
-                    70,
-                    100
+                    50,
+                    90
                 )
             )
         }
 
         // =========================================================
-        // GLOW DOT
+        // SMALL GLOW DOT
         // =========================================================
 
         private fun drawGlowDot(
@@ -1214,7 +1470,7 @@ class MyLiveWallpaperService : WallpaperService() {
 
             paint.color =
                 Color.argb(
-                    35,
+                    30,
                     255,
                     40,
                     90
@@ -1239,6 +1495,185 @@ class MyLiveWallpaperService : WallpaperService() {
                 y,
                 3f,
                 paint
+            )
+        }
+
+        // =========================================================
+        // DURATION CALCULATION
+        // =========================================================
+
+        private data class DurationResult(
+            val years: Int,
+            val months: Int,
+            val days: Int,
+            val hours: Int,
+            val minutes: Int,
+            val seconds: Int,
+            val totalDays: Long
+        )
+
+        private fun calculateDuration(
+            start: Calendar,
+            end: Calendar
+        ): DurationResult {
+
+            val cursor =
+                Calendar.getInstance()
+
+            cursor.timeInMillis =
+                start.timeInMillis
+
+            var years = 0
+            var months = 0
+            var days = 0
+
+            // -----------------------------------------------------
+            // YEARS
+            // -----------------------------------------------------
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.YEAR,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    years++
+
+                } else {
+
+                    break
+                }
+            }
+
+            // -----------------------------------------------------
+            // MONTHS
+            // -----------------------------------------------------
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.MONTH,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    months++
+
+                } else {
+
+                    break
+                }
+            }
+
+            // -----------------------------------------------------
+            // DAYS
+            // -----------------------------------------------------
+
+            while (true) {
+
+                val next =
+                    Calendar.getInstance()
+
+                next.timeInMillis =
+                    cursor.timeInMillis
+
+                next.add(
+                    Calendar.DAY_OF_MONTH,
+                    1
+                )
+
+                if (
+                    next.timeInMillis <=
+                    end.timeInMillis
+                ) {
+
+                    cursor.timeInMillis =
+                        next.timeInMillis
+
+                    days++
+
+                } else {
+
+                    break
+                }
+            }
+
+            // -----------------------------------------------------
+            // REMAINING TIME
+            // -----------------------------------------------------
+
+            val remaining =
+                end.timeInMillis -
+                        cursor.timeInMillis
+
+            val totalSeconds =
+                remaining / 1000L
+
+            val hours =
+                (
+                        totalSeconds /
+                                3600L
+                        ).toInt()
+
+            val minutes =
+                (
+                        (totalSeconds %
+                                3600L) /
+                                60L
+                        ).toInt()
+
+            val seconds =
+                (
+                        totalSeconds %
+                                60L
+                        ).toInt()
+
+            // -----------------------------------------------------
+            // TOTAL DAYS
+            // -----------------------------------------------------
+
+            val totalDays =
+                (
+                        end.timeInMillis -
+                                start.timeInMillis
+                        ) / 86400000L
+
+            return DurationResult(
+                years = years,
+                months = months,
+                days = days,
+                hours = hours,
+                minutes = minutes,
+                seconds = seconds,
+                totalDays = totalDays
             )
         }
     }
