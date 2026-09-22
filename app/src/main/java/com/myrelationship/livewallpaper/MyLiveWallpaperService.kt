@@ -229,7 +229,7 @@ class MyLiveWallpaperService : WallpaperService() {
     ((t * (8 + i % 5)) % height.toDouble()).toFloat()
 
                 val y =
-                    (height - movement + i * 130) % height
+                    (height - movement + i * 130f) % height
 
                 paint.color =
                     Color.argb(
@@ -982,7 +982,7 @@ private fun calculateDuration(
         minutes = minutes,
         seconds = seconds,
         totalDays = totalDays
-    )
-}
-}
+        )
+      }
+   }
 }  
