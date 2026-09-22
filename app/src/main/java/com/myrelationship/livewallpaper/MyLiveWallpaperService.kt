@@ -1449,7 +1449,7 @@ drawText(
     canvas,
     "♥  NEXT ANNIVERSARY  ♥",
     centerX,
-    1300f,
+    1340f,
     23f,
     Color.rgb(
         255,
@@ -1465,7 +1465,7 @@ drawText(
         nextAnniversary
     ),
     centerX,
-    1340f,
+    1380f,
     24f,
     Color.WHITE,
     true
@@ -1477,7 +1477,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
         canvas,
         "$daysUntilAnniversary DAYS TO GO",
         centerX,
-        1375f,
+        1415f,
         14f,
         Color.rgb(
             155,
@@ -1610,7 +1610,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1410f,
+                1490f,
                 21f,
                 Color.rgb(
                     255,
@@ -1623,13 +1623,13 @@ if (!isAnniversaryToday(nextAnniversary)) {
             drawGlowDot(
                 canvas,
                 centerX - 250f,
-                1410f
+                1490f
             )
 
             drawGlowDot(
                 canvas,
                 centerX + 250f,
-                1410f
+                1490f
             )
         }
 
