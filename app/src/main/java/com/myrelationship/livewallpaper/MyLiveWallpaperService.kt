@@ -984,5 +984,4 @@ private fun calculateDuration(
         totalDays = totalDays
         )
       }
-   }
-}  
+    }
