@@ -1565,12 +1565,8 @@ private fun drawText(
             )
         }
 
-        // ============================================================
-        // HEART
-        // ============================================================
-
-        // ============================================================
-// HEART
+       // ============================================================
+// PERFECT HEART
 // ============================================================
 
 private fun drawHeartShape(
@@ -1584,89 +1580,79 @@ private fun drawHeartShape(
     path.reset()
 
     // --------------------------------------------------------
-    // Start at bottom point
+    // TOP CENTER NOTCH
     // --------------------------------------------------------
 
     path.moveTo(
         cx,
-        cy + size * 1.15f
+        cy - size * 0.18f
     )
 
     // --------------------------------------------------------
-    // LEFT SIDE + LEFT LOBE
+    // LEFT LOBE
     // --------------------------------------------------------
 
     path.cubicTo(
-        cx - size * 1.55f,
-        cy + size * 0.15f,
-
-        cx - size * 1.55f,
-        cy - size * 0.85f,
-
-        cx - size * 0.75f,
-        cy - size * 0.85f
+        cx - size * 0.28f,
+        cy - size * 0.62f,
+        cx - size * 0.88f,
+        cy - size * 0.70f,
+        cx - size * 1.08f,
+        cy - size * 0.28f
     )
 
     // --------------------------------------------------------
-    // LEFT LOBE TO CENTER NOTCH
+    // LEFT SIDE → BOTTOM POINT
     // --------------------------------------------------------
 
     path.cubicTo(
-        cx - size * 0.30f,
-        cy - size * 0.85f,
-
-        cx - size * 0.12f,
-        cy - size * 0.42f,
-
+        cx - size * 1.35f,
+        cy + size * 0.28f,
+        cx - size * 0.78f,
+        cy + size * 0.72f,
         cx,
-        cy - size * 0.25f
+        cy + size * 1.18f
     )
 
     // --------------------------------------------------------
-    // CENTER NOTCH TO RIGHT LOBE
+    // BOTTOM POINT → RIGHT SIDE
     // --------------------------------------------------------
 
     path.cubicTo(
-        cx + size * 0.12f,
-        cy - size * 0.42f,
-
-        cx + size * 0.30f,
-        cy - size * 0.85f,
-
-        cx + size * 0.75f,
-        cy - size * 0.85f
+        cx + size * 0.78f,
+        cy + size * 0.72f,
+        cx + size * 1.35f,
+        cy + size * 0.28f,
+        cx + size * 1.08f,
+        cy - size * 0.28f
     )
 
     // --------------------------------------------------------
-    // RIGHT LOBE + RIGHT SIDE TO BOTTOM
+    // RIGHT LOBE → CENTER NOTCH
     // --------------------------------------------------------
 
     path.cubicTo(
-        cx + size * 1.55f,
-        cy - size * 0.85f,
-
-        cx + size * 1.55f,
-        cy + size * 0.15f,
-
+        cx + size * 0.88f,
+        cy - size * 0.70f,
+        cx + size * 0.28f,
+        cy - size * 0.62f,
         cx,
-        cy + size * 1.15f
+        cy - size * 0.18f
     )
 
     // --------------------------------------------------------
-    // DRAW
+    // DRAW HEART
     // --------------------------------------------------------
 
     paint.style = Paint.Style.FILL
-
     paint.color = color
-
     paint.alpha = 255
 
     canvas.drawPath(
         path,
         paint
     )
-}
+} 
 
         // ============================================================
         // LARGE HEART
