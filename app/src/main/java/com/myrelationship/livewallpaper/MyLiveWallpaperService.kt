@@ -1287,7 +1287,7 @@ if (isAnniversaryToday(anniversary)) {
                 time,
                 centerX,
                 230f,
-                110f,
+                130f,
                 Color.WHITE,
                 true
             )
@@ -1340,7 +1340,7 @@ if (isAnniversaryToday(anniversary)) {
             val togetherStart =
                 getDateFromSettings(
                     "together_date",
-                    14,
+                    6,
                     Calendar.FEBRUARY,
                     2006
                 )
@@ -1463,7 +1463,7 @@ drawText(
     canvas,
     "♥  NEXT ANNIVERSARY  ♥",
     centerX,
-    1360f,
+    1390f,
     31f,
     Color.rgb(
         255,
@@ -1479,10 +1479,16 @@ drawText(
         nextAnniversary
     ),
     centerX,
-    1405f,
+    1440f,
     24f,
     Color.WHITE,
     true
+)
+
+drawDivider(
+    canvas,
+    centerX,
+    1460f
 )
 
 if (!isAnniversaryToday(nextAnniversary)) {
@@ -1491,7 +1497,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
         canvas,
         "$daysUntilAnniversary DAYS TO GO",
         centerX,
-        1445f,
+        1490f,
         14f,
         Color.rgb(
             155,
@@ -1624,7 +1630,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1490f,
+                1520f,
                 31f,
                 Color.rgb(
                     255,
