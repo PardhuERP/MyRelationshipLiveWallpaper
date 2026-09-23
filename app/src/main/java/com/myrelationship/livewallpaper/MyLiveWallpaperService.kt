@@ -1970,7 +1970,7 @@ private fun drawText(
                 values[i],
                 positions[i],
                 y,
-                35f,
+                48f,
                 Color.WHITE,
                 true
             )
@@ -1979,8 +1979,8 @@ private fun drawText(
                 canvas,
                 labels[i],
                 positions[i],
-                y + 34f,
-                12f,
+                y + 42f,
+                15f,
                 Color.rgb(
                     120,
                     123,
