@@ -243,6 +243,30 @@ addSpace(root, 40)
             )
         )
 
+    // --------------------------------------------------------
+// MADE BY
+// --------------------------------------------------------
+
+val madeByText = TextView(this)
+
+madeByText.text = "Made by Pardhu ❤️"
+madeByText.textSize = 14f
+madeByText.gravity = Gravity.CENTER
+madeByText.setTextColor(
+    android.graphics.Color.GRAY
+)
+
+val madeByParams = LinearLayout.LayoutParams(
+    -1,
+    -2
+)
+
+madeByParams.topMargin = 35
+
+root.addView(
+    madeByText,
+    madeByParams
+)
         setContentView(root)
     }
 
