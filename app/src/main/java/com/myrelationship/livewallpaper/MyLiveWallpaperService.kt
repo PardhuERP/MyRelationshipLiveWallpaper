@@ -1255,7 +1255,7 @@ if (isAnniversaryToday(anniversary)) {
             drawGlowingHeart(
                 canvas,
                 centerX,
-                115f
+                125f
             )
 
             drawText(
@@ -1633,8 +1633,8 @@ drawDivider(
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1630f,
-                31f,
+                1615f,
+                33f,
                 Color.rgb(
                     255,
                     55,
@@ -1913,106 +1913,194 @@ private fun drawText(
         // ============================================================
         // TIME COLUMNS
         // ============================================================
+        // ============================================================
+    private fun drawTimeColumns(
+    canvas: Canvas,
+    centerX: Float,
+    y: Float,
+    hours: Int,
+    minutes: Int,
+    seconds: Int,
+    showSeconds: Boolean
+) {
 
-        private fun drawTimeColumns(
-            canvas: Canvas,
-            centerX: Float,
-            y: Float,
-            hours: Int,
-            minutes: Int,
-            seconds: Int,
-            showSeconds: Boolean
-        ) {
+    if (showSeconds) {
 
-            val positions =
-                floatArrayOf(
-                    centerX - 270f,
-                    centerX,
-                    centerX + 270f
-                )
+        // ----------------------------------------------------
+        // 3 COLUMNS — HOURS / MINUTES / SECONDS
+        // ----------------------------------------------------
 
-            val values =
-                arrayOf(
-                    String.format(
-                        Locale.getDefault(),
-                        "%02d",
-                        hours
-                    ),
-                    String.format(
-                        Locale.getDefault(),
-                        "%02d",
-                        minutes
-                    ),
-                    String.format(
-                        Locale.getDefault(),
-                        "%02d",
-                        seconds
-                    )
-                )
-
-            val labels =
-                arrayOf(
-                    "HOURS",
-                    "MINUTES",
-                    "SECONDS"
-                )
-
-            for (i in 0..2) {
-
-                drawText(
-                    canvas,
-                    values[i],
-                    positions[i],
-                    y,
-                    48f,
-                    Color.WHITE,
-                    true
-                )
-
-                drawText(
-                    canvas,
-                    labels[i],
-                    positions[i],
-                    y + 42f,
-                    15f,
-                    Color.rgb(
-                        120,
-                        123,
-                        133
-                    ),
-                    false
-                )
-            }
-
-            paint.style =
-                Paint.Style.STROKE
-
-            paint.strokeWidth =
-                1f
-
-            paint.color =
-                Color.rgb(
-                    70,
-                    50,
-                    60
-                )
-
-            canvas.drawLine(
-                centerX - 135f,
-                y - 12f,
-                centerX - 135f,
-                y + 30f,
-                paint
+        val positions =
+            floatArrayOf(
+                centerX - 270f,
+                centerX,
+                centerX + 270f
             )
 
-            canvas.drawLine(
-                centerX + 135f,
-                y - 12f,
-                centerX + 135f,
-                y + 30f,
-                paint
+        val values =
+            arrayOf(
+                String.format(
+                    Locale.getDefault(),
+                    "%02d",
+                    hours
+                ),
+                String.format(
+                    Locale.getDefault(),
+                    "%02d",
+                    minutes
+                ),
+                String.format(
+                    Locale.getDefault(),
+                    "%02d",
+                    seconds
+                )
+            )
+
+        val labels =
+            arrayOf(
+                "HOURS",
+                "MINUTES",
+                "SECONDS"
+            )
+
+        for (i in 0..2) {
+
+            drawText(
+                canvas,
+                values[i],
+                positions[i],
+                y,
+                35f,
+                Color.WHITE,
+                true
+            )
+
+            drawText(
+                canvas,
+                labels[i],
+                positions[i],
+                y + 34f,
+                12f,
+                Color.rgb(
+                    120,
+                    123,
+                    133
+                ),
+                false
             )
         }
+
+        // Dividers
+        paint.style =
+            Paint.Style.STROKE
+
+        paint.strokeWidth = 1f
+
+        paint.color =
+            Color.rgb(
+                70,
+                50,
+                60
+            )
+
+        canvas.drawLine(
+            centerX - 135f,
+            y - 12f,
+            centerX - 135f,
+            y + 30f,
+            paint
+        )
+
+        canvas.drawLine(
+            centerX + 135f,
+            y - 12f,
+            centerX + 135f,
+            y + 30f,
+            paint
+        )
+
+    } else {
+
+        // ----------------------------------------------------
+        // 2 COLUMNS — HOURS / MINUTES ONLY
+        // ----------------------------------------------------
+
+        val positions =
+            floatArrayOf(
+                centerX - 135f,
+                centerX + 135f
+            )
+
+        val values =
+            arrayOf(
+                String.format(
+                    Locale.getDefault(),
+                    "%02d",
+                    hours
+                ),
+                String.format(
+                    Locale.getDefault(),
+                    "%02d",
+                    minutes
+                )
+            )
+
+        val labels =
+            arrayOf(
+                "HOURS",
+                "MINUTES"
+            )
+
+        for (i in 0..1) {
+
+            drawText(
+                canvas,
+                values[i],
+                positions[i],
+                y,
+                35f,
+                Color.WHITE,
+                true
+            )
+
+            drawText(
+                canvas,
+                labels[i],
+                positions[i],
+                y + 34f,
+                12f,
+                Color.rgb(
+                    120,
+                    123,
+                    133
+                ),
+                false
+            )
+        }
+
+        // Center divider
+        paint.style =
+            Paint.Style.STROKE
+
+        paint.strokeWidth = 1f
+
+        paint.color =
+            Color.rgb(
+                70,
+                50,
+                60
+            )
+
+        canvas.drawLine(
+            centerX,
+            y - 12f,
+            centerX,
+            y + 30f,
+            paint
+        )
+    }
+}
+        
 
         // ============================================================
         // GLOWING HEART
