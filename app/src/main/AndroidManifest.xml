@@ -6,6 +6,7 @@
         android:label="UsForever"
         android:supportsRtl="true">
 
+        <!-- Main App Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -17,10 +18,11 @@
 
         </activity>
 
+        <!-- Live Wallpaper Service -->
         <service
             android:name=".MyLiveWallpaperService"
             android:exported="true"
-            android:label="My Relationship Live Wallpaper"
+            android:label="UsForever Live Wallpaper"
             android:permission="android.permission.BIND_WALLPAPER">
 
             <intent-filter>
@@ -32,17 +34,6 @@
                 android:resource="@xml/wallpaper" />
 
         </service>
-
-<activity
-    android:name=".MainActivity"
-    android:exported="true">
-
-    <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-    </intent-filter>
-
-</activity>
 
     </application>
 
