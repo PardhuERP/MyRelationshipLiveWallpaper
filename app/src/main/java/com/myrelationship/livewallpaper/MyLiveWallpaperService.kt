@@ -1420,7 +1420,8 @@ if (isAnniversaryToday(anniversary)) {
                 655f,
                 together.hours,
                 together.minutes,
-                together.seconds
+                together.seconds,
+                false
             )
 // ========================================================
 // NEXT ANNIVERSARY
@@ -1620,7 +1621,8 @@ drawDivider(
                 1245f,
                 married.hours,
                 married.minutes,
-                married.seconds
+                married.seconds,
+                true
             )
 
             // --------------------------------------------------------
@@ -1631,7 +1633,7 @@ drawDivider(
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1660f,
+                1630f,
                 31f,
                 Color.rgb(
                     255,
@@ -1660,7 +1662,7 @@ drawDivider(
                drawGlowingHeart(
                canvas,
                centerX,
-               1800f
+               1770f
            ) 
         }
         
@@ -1918,7 +1920,8 @@ private fun drawText(
             y: Float,
             hours: Int,
             minutes: Int,
-            seconds: Int
+            seconds: Int,
+            showSeconds: Boolean
         ) {
 
             val positions =
