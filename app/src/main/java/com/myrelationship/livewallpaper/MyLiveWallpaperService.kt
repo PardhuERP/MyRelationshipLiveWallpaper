@@ -1485,11 +1485,6 @@ drawText(
     true
 )
 
-drawDivider(
-    canvas,
-    centerX,
-    1460f
-)
 
 if (!isAnniversaryToday(nextAnniversary)) {
 
@@ -1507,6 +1502,12 @@ if (!isAnniversaryToday(nextAnniversary)) {
         false
     )
 }
+
+drawDivider(
+    canvas,
+    centerX,
+    1520f
+)
 
             // --------------------------------------------------------
             // RINGS
@@ -1653,6 +1654,15 @@ if (!isAnniversaryToday(nextAnniversary)) {
             )
         }
 
+        // --------------------------------------------------------
+// LOWER VIBRATING HEART
+// --------------------------------------------------------
+
+drawGlowingHeart(
+    canvas,
+    centerX,
+    1650f
+)
         // ============================================================
         // DATE FROM SETTINGS
         // Compatible with current MainActivity Long values
