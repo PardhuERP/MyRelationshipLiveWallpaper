@@ -1631,7 +1631,7 @@ drawDivider(
                 canvas,
                 "♥ Same People • Same Dreams ♥",
                 centerX,
-                1520f,
+                1660f,
                 31f,
                 Color.rgb(
                     255,
@@ -1660,7 +1660,7 @@ drawDivider(
                drawGlowingHeart(
                canvas,
                centerX,
-               1650f
+               1800f
            ) 
         }
         
