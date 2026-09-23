@@ -1260,7 +1260,7 @@ if (isAnniversaryToday(anniversary)) {
 
             drawText(
                 canvas,
-                "Heart beat...",
+                "♥",
                 centerX,
                 170f,
                 18f,
@@ -1652,17 +1652,18 @@ drawDivider(
                 centerX + 250f,
                 1490f
             )
-        }
 
-        // --------------------------------------------------------
+// --------------------------------------------------------
 // LOWER VIBRATING HEART
 // --------------------------------------------------------
 
-drawGlowingHeart(
-    canvas,
-    centerX,
-    1650f
-)
+               drawGlowingHeart(
+               canvas,
+               centerX,
+               1650f
+           ) 
+        }
+        
         // ============================================================
         // DATE FROM SETTINGS
         // Compatible with current MainActivity Long values
