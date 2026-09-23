@@ -1287,7 +1287,7 @@ if (isAnniversaryToday(anniversary)) {
                 time,
                 centerX,
                 230f,
-                100f,
+                110f,
                 Color.WHITE,
                 true
             )
@@ -1307,11 +1307,11 @@ if (isAnniversaryToday(anniversary)) {
                 currentDate,
                 centerX,
                 285f,
-                16f,
+                30f,
                 Color.rgb(
-                    145,
                     148,
-                    158
+                    163,
+                    184
                 ),
                 false
             )
@@ -1324,8 +1324,8 @@ if (isAnniversaryToday(anniversary)) {
                 canvas,
                 "♥  TOGETHER FOR  ♥",
                 centerX,
-                335f,
-                25f,
+                340f,
+                31f,
                 Color.rgb(
                     255,
                     55,
@@ -1358,7 +1358,7 @@ if (isAnniversaryToday(anniversary)) {
                         "${together.days} Days",
                 centerX,
                 400f,
-                32f,
+                42f,
                 Color.WHITE,
                 true
             )
@@ -1370,8 +1370,8 @@ if (isAnniversaryToday(anniversary)) {
                             togetherStart
                         ),
                 centerX,
-                445f,
-                17f,
+                455f,
+                20f,
                 Color.rgb(
                     155,
                     158,
@@ -1394,8 +1394,8 @@ if (isAnniversaryToday(anniversary)) {
                 canvas,
                 together.totalDays.toString(),
                 centerX,
-                555f,
-                50f,
+                560f,
+                68f,
                 Color.WHITE,
                 true
             )
@@ -1404,8 +1404,8 @@ if (isAnniversaryToday(anniversary)) {
                 canvas,
                 "TOTAL DAYS",
                 centerX,
-                585f,
-                13f,
+                595f,
+                16f,
                 Color.rgb(
                     130,
                     133,
@@ -1521,7 +1521,7 @@ if (!isAnniversaryToday(nextAnniversary)) {
                 "♥  MARRIED FOR  ♥",
                 centerX,
                 920f,
-                25f,
+                31f,
                 Color.rgb(
                     255,
                     55,
@@ -1550,8 +1550,8 @@ if (!isAnniversaryToday(nextAnniversary)) {
                         "${married.months} Months  •  " +
                         "${married.days} Days",
                 centerX,
-                990f,
-                30f,
+                995f,
+                40f,
                 Color.WHITE,
                 true
             )
@@ -1563,8 +1563,8 @@ if (!isAnniversaryToday(nextAnniversary)) {
                             marriedStart
                         ),
                 centerX,
-                1035f,
-                17f,
+                1045f,
+                20f,
                 Color.rgb(
                     155,
                     158,
@@ -1587,8 +1587,8 @@ if (!isAnniversaryToday(nextAnniversary)) {
                 canvas,
                 married.totalDays.toString(),
                 centerX,
-                1145f,
-                50f,
+                1150f,
+                68f,
                 Color.WHITE,
                 true
             )
@@ -1597,8 +1597,8 @@ if (!isAnniversaryToday(nextAnniversary)) {
                 canvas,
                 "TOTAL DAYS",
                 centerX,
-                1175f,
-                13f,
+                1185f,
+                16f,
                 Color.rgb(
                     130,
                     133,
@@ -1833,7 +1833,7 @@ private fun drawText(
             )
         }
 
-    paint.setFakeBoldText(false)
+    paint.setFakeBoldText(bold)
 
     canvas.drawText(
         text,
@@ -1944,7 +1944,7 @@ private fun drawText(
                     values[i],
                     positions[i],
                     y,
-                    35f,
+                    48f,
                     Color.WHITE,
                     true
                 )
@@ -1953,8 +1953,8 @@ private fun drawText(
                     canvas,
                     labels[i],
                     positions[i],
-                    y + 34f,
-                    12f,
+                    y + 42f,
+                    15f,
                     Color.rgb(
                         120,
                         123,
