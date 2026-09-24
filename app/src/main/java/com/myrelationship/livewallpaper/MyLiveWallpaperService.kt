@@ -476,7 +476,7 @@ private fun drawPetal(
 
                         drawWallpaper()
 
-                        Thread.sleep(1000)
+                        Thread.sleep(250)
 
                     } catch (_: InterruptedException) {
 
@@ -488,7 +488,7 @@ private fun drawPetal(
                         // crashing because of a drawing error.
 
                         try {
-                            Thread.sleep(1000)
+                            Thread.sleep(250)
                         } catch (_: Exception) {
                             break
                         }
